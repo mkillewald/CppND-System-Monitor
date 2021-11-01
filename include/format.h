@@ -4,6 +4,8 @@
 #include <string>
 
 namespace Format {
+template <typename T>
+std::string ZeroedString(T value);
 std::string ElapsedTime(long times);
 };  // namespace Format
 

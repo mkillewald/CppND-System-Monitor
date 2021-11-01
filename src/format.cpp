@@ -5,8 +5,8 @@
 using std::string;
 using std::to_string;
 
-#define SECONDS_PER_HOUR 3600
 #define SECONDS_PER_MINUTE 60
+#define SECONDS_PER_HOUR 3600
 
 template <typename T>
 string Format::ZeroedString(T value) {

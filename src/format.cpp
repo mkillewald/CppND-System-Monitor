@@ -21,9 +21,9 @@ string Format::ElapsedTime(long seconds) {
   }
 
   long hours = seconds / SECONDS_PER_HOUR;
-  seconds -= hours * SECONDS_PER_HOUR;
+  seconds %= SECONDS_PER_HOUR;
   long minutes = seconds / SECONDS_PER_MINUTE;
-  seconds -= minutes * SECONDS_PER_MINUTE;
+  seconds %= SECONDS_PER_MINUTE;
 
   return ZeroedString(hours) + ":" + ZeroedString(minutes) + ":" +
          ZeroedString(seconds);

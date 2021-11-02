@@ -139,8 +139,20 @@ int LinuxParser::GetProcStatValueForKey(string key_in) {
   return 0;
 }
 
-// TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
+// Read and return CPU utilization
+vector<string> LinuxParser::CpuUtilization() {
+  string value;
+  string line = GetProcStatLineForKey("cpu");
+  vector<string> values;
+  if (!line.empty()) {
+    std::istringstream linestream(line);
+    while (linestream >> value) {
+      values.emplace_back(value);
+    }
+  }
+
+  return values;
+}
 
 // Read and return the total number of processes
 int LinuxParser::TotalProcesses() {

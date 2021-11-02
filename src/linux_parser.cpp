@@ -12,7 +12,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// DONE: An example of how to read data from the filesystem
+// Read and return the operating system name
 string LinuxParser::OperatingSystem() {
   string line;
   string key;
@@ -35,7 +35,7 @@ string LinuxParser::OperatingSystem() {
   return value;
 }
 
-// DONE: An example of how to read data from the filesystem
+// Read and return the system's kernel identifier (string)
 string LinuxParser::Kernel() {
   string os, kernel, version;
   string line;

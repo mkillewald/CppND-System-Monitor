@@ -18,12 +18,14 @@ const std::string kVersionFilename{"/version"};
 const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
+std::string GetLine(const std::string&, const std::string&);
+std::vector<std::string> GetValues(const std::string&, const std::string&);
+std::string GetValueForKey(const std::string&, const std::string&);
+
 // System
 float MemoryUtilization();
 long UpTime();
 std::vector<int> Pids();
-std::string GetProcStatLineForKey(std::string);
-int GetProcStatValueForKey(std::string);
 int TotalProcesses();
 int RunningProcesses();
 std::string OperatingSystem();

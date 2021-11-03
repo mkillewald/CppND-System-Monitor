@@ -11,6 +11,56 @@ using std::string;
 using std::to_string;
 using std::vector;
 
+// Returns line from file at given path whose first token matches key_in.
+// If key_in is not supplied, the first line of the file is returned.
+string LinuxParser::GetLine(const string& path, const string& key_in = "") {
+  string line;
+  std::ifstream filestream(path);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      if (key_in.empty()) {
+        return line;
+      } else if (line.compare(0, key_in.length(), key_in) == 0) {
+        return line;
+      }
+    }
+  }
+  return line;
+}
+
+// Returns a tokenized vector of strings from a line in file at given path whose
+// first token matches key_in. If key_in is not supplied, the first line of the
+// file is tokenized and returned.
+// Note: If key_in is supplied, item 0 in the returned vector will match key_in,
+// and the values will start at item 1
+vector<string> LinuxParser::GetValues(const string& path,
+                                      const string& key_in = "") {
+  string value;
+  string line = GetLine(path, key_in);
+  vector<string> values;
+  if (!line.empty()) {
+    std::istringstream linestream(line);
+    while (linestream >> value) {
+      values.emplace_back(value);
+    }
+  }
+  return values;
+}
+
+// Returns string value from a line in file at given path whose first token
+// matches key_in
+// Note: this is useful only if the line in the file contains a single key,
+// value pair.
+string LinuxParser::GetValueForKey(const string& path, const string& key_in) {
+  string key, value;
+  string line = GetLine(path, key_in);
+  if (!line.empty()) {
+    std::istringstream linestream(line);
+    linestream >> key >> value;
+  }
+  return value;
+}
+
 // Read and return the operating system name
 string LinuxParser::OperatingSystem() {
   string line;
@@ -36,15 +86,9 @@ string LinuxParser::OperatingSystem() {
 
 // Read and return the system's kernel identifier (string)
 string LinuxParser::Kernel() {
-  string os, kernel, version;
-  string line;
-  std::ifstream stream(kProcDirectory + kVersionFilename);
-  if (stream.is_open()) {
-    std::getline(stream, line);
-    std::istringstream linestream(line);
-    linestream >> os >> version >> kernel;
-  }
-  return kernel;
+  vector<string> values =
+      LinuxParser::GetValues(kProcDirectory + kVersionFilename);
+  return values.at(KERNEL_INDEX);
 }
 
 // BONUS: Update this to use std::filesystem
@@ -89,10 +133,9 @@ float LinuxParser::MemoryUtilization() {
 
 // Read and return the system uptime
 long LinuxParser::UpTime() {
-  string uptime, line;
-  std::ifstream filestream(kProcDirectory + kUptimeFilename);
-  if (filestream.is_open()) {
-    std::getline(filestream, line);
+  string uptime;
+  string line = LinuxParser::GetLine(kProcDirectory + kUptimeFilename);
+  if (!line.empty()) {
     std::istringstream linestream(line);
     linestream >> uptime;
     return std::stol(uptime);
@@ -113,52 +156,28 @@ long LinuxParser::ActiveJiffies() { return 0; }
 // TODO: Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { return 0; }
 
-string LinuxParser::GetProcStatLineForKey(string key_in) {
-  string line;
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
-      if (line.compare(0, key_in.length(), key_in) == 0) {
-        return line;
-      }
-    }
-  }
-  return line;
+// Read and return CPU utilization
+vector<string> LinuxParser::CpuUtilization() {
+  return GetValues(kProcDirectory + kStatFilename, "cpu");
 }
 
-int LinuxParser::GetProcStatValueForKey(string key_in) {
-  string key, value;
-  string line = GetProcStatLineForKey(key_in);
-  if (!line.empty()) {
-    std::istringstream linestream(line);
-    linestream >> key >> value;
+// Read and return the total number of processes
+int LinuxParser::TotalProcesses() {
+  string value = GetValueForKey(kProcDirectory + kStatFilename, "processes");
+  if (!value.empty()) {
     return stoi(value);
   }
   return 0;
 }
 
-// Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() {
-  string value;
-  string line = GetProcStatLineForKey("cpu");
-  vector<string> values;
-  if (!line.empty()) {
-    std::istringstream linestream(line);
-    while (linestream >> value) {
-      values.emplace_back(value);
-    }
-  }
-  return values;
-}
-
-// Read and return the total number of processes
-int LinuxParser::TotalProcesses() {
-  return GetProcStatValueForKey("processes");
-}
-
 // Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
-  return GetProcStatValueForKey("procs_running");
+  string value =
+      GetValueForKey(kProcDirectory + kStatFilename, "procs_running");
+  if (!value.empty()) {
+    return stoi(value);
+  }
+  return 0;
 }
 
 // Read and return the command associated with a process

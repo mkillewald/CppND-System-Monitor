@@ -72,22 +72,19 @@ vector<int> LinuxParser::Pids() {
 float LinuxParser::MemoryUtilization() {
   string key, value, line;
   vector<string> values;
-  long total, used, free, buffers, cached;
+  long total, available;
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
   if (filestream.is_open()) {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
       std::getline(filestream, line);
       std::istringstream linestream(line);
       linestream >> key >> value;
       values.push_back(value);
     }
     total = stol(values[0]);
-    free = stol(values[1]);
-    used = total - free;
-    buffers = stol(values[3]);
-    cached = stol(values[4]);
+    available = stol(values[2]);
   }
-  return (float)(total - (used - (buffers + cached))) / (float)total;
+  return (float)available / (float)total;
 }
 
 // Read and return the system uptime

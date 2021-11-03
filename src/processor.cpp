@@ -21,7 +21,7 @@ float Processor::Utilization() {
   long softirq = stol(values[7]);
   long steal = stol(values[8]);
 
-  // Calculation based on answer by Vangelis Tasoulas at:
+  // Calculation based on question and answer by Vangelis Tasoulas at:
   // https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
 
   idle += iowait;

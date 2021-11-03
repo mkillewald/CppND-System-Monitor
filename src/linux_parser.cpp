@@ -95,8 +95,9 @@ long LinuxParser::UpTime() {
     std::getline(filestream, line);
     std::istringstream linestream(line);
     linestream >> uptime;
+    return std::stol(uptime);
   }
-  return std::stol(uptime);
+  return 0;
 }
 
 // TODO: Read and return the number of jiffies for the system
@@ -147,7 +148,6 @@ vector<string> LinuxParser::CpuUtilization() {
       values.emplace_back(value);
     }
   }
-
   return values;
 }
 

@@ -5,6 +5,9 @@
 #include <regex>
 #include <string>
 
+#define KERNEL_INDEX 2
+#define PID_UPTIME_INDEX 21
+
 namespace LinuxParser {
 // Paths
 const std::string kProcDirectory{"/proc/"};

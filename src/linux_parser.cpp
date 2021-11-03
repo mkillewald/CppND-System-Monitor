@@ -70,7 +70,7 @@ vector<int> LinuxParser::Pids() {
 
 // Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() {
-  string label, value, line;
+  string key, value, line;
   vector<string> values;
   long total, used, free, buffers, cached;
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
@@ -78,7 +78,7 @@ float LinuxParser::MemoryUtilization() {
     for (int i = 0; i < 5; i++) {
       std::getline(filestream, line);
       std::istringstream linestream(line);
-      linestream >> label >> value;
+      linestream >> key >> value;
       values.push_back(value);
     }
     total = stol(values[0]);

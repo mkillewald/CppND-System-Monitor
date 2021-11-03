@@ -82,8 +82,9 @@ float LinuxParser::MemoryUtilization() {
     }
     total = stol(values[0]);
     available = stol(values[2]);
+    return (float)(total - available) / (float)total;
   }
-  return (float)available / (float)total;
+  return 0.0;
 }
 
 // Read and return the system uptime

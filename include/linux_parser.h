@@ -6,7 +6,7 @@
 #include <string>
 
 #define KERNEL_INDEX 2
-#define PID_UPTIME_INDEX 21
+#define PID_STARTTIME_INDEX 21
 
 namespace LinuxParser {
 // Paths
@@ -21,8 +21,9 @@ const std::string kVersionFilename{"/version"};
 const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
-std::string GetLine(const std::string&, const std::string&);
-std::vector<std::string> GetValues(const std::string&, const std::string&);
+std::string GetLineFromFile(const std::string&, const std::string&);
+std::vector<std::string> GetValuesFromLine(const std::string&,
+                                           const std::string&);
 std::string GetValueForKey(const std::string&, const std::string&);
 
 // System

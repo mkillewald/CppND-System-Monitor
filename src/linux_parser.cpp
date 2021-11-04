@@ -13,7 +13,8 @@ using std::vector;
 
 // Returns line from file at given path whose first token matches key_in.
 // If key_in is not supplied, the first line of the file is returned.
-string LinuxParser::GetLine(const string& path, const string& key_in = "") {
+string LinuxParser::GetLineFromFile(const string& path,
+                                    const string& key_in = "") {
   string line;
   std::ifstream filestream(path);
   if (filestream.is_open()) {
@@ -28,15 +29,15 @@ string LinuxParser::GetLine(const string& path, const string& key_in = "") {
   return line;
 }
 
-// Returns a tokenized vector of strings from a line in file at given path whose
-// first token matches key_in. If key_in is not supplied, the first line of the
-// file is tokenized and returned.
+// Finds a line in file at given path whose first token matches key_in, and
+// returns it as a tokenized vector of strings. If key_in is not supplied, the
+// first line of the file is tokenized and returned.
 // Note: If key_in is supplied, item 0 in the returned vector will match key_in,
 // and the values will start at item 1
-vector<string> LinuxParser::GetValues(const string& path,
-                                      const string& key_in = "") {
+vector<string> LinuxParser::GetValuesFromLine(const string& path,
+                                              const string& key_in = "") {
   string value;
-  string line = GetLine(path, key_in);
+  string line = GetLineFromFile(path, key_in);
   vector<string> values;
   if (!line.empty()) {
     std::istringstream linestream(line);
@@ -53,7 +54,7 @@ vector<string> LinuxParser::GetValues(const string& path,
 // value pair.
 string LinuxParser::GetValueForKey(const string& path, const string& key_in) {
   string key, value;
-  string line = GetLine(path, key_in);
+  string line = GetLineFromFile(path, key_in);
   if (!line.empty()) {
     std::istringstream linestream(line);
     linestream >> key >> value;
@@ -87,7 +88,7 @@ string LinuxParser::OperatingSystem() {
 // Read and return the system's kernel identifier (string)
 string LinuxParser::Kernel() {
   vector<string> values =
-      LinuxParser::GetValues(kProcDirectory + kVersionFilename);
+      LinuxParser::GetValuesFromLine(kProcDirectory + kVersionFilename);
   return values.at(KERNEL_INDEX);
 }
 
@@ -134,7 +135,7 @@ float LinuxParser::MemoryUtilization() {
 // Read and return the system uptime
 long LinuxParser::UpTime() {
   string uptime;
-  string line = LinuxParser::GetLine(kProcDirectory + kUptimeFilename);
+  string line = LinuxParser::GetLineFromFile(kProcDirectory + kUptimeFilename);
   if (!line.empty()) {
     std::istringstream linestream(line);
     linestream >> uptime;
@@ -158,7 +159,7 @@ long LinuxParser::IdleJiffies() { return 0; }
 
 // Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() {
-  return GetValues(kProcDirectory + kStatFilename, "cpu");
+  return GetValuesFromLine(kProcDirectory + kStatFilename, "cpu");
 }
 
 // Read and return the total number of processes

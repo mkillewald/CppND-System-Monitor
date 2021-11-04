@@ -5,15 +5,18 @@
 #include <regex>
 #include <string>
 
-// indexes for /proc/version
+// data indexes for /proc/version
 #define KERNEL_INDEX 2
 
-// indexes for /proc/meminfo
+// data indexes for /proc/meminfo
 #define MEM_TOTAL_INDEX 0
 #define MEM_AVAIL_INDEX 2
 
-// indexes for /proc/pid/stat
+// data indexes for /proc/pid/stat
 #define PID_STARTTIME_INDEX 21
+
+// data indexes for /etc/password
+#define UID_INDEX 2
 
 namespace LinuxParser {
 // Paths
@@ -27,6 +30,13 @@ const std::string kMeminfoFilename{"/meminfo"};
 const std::string kVersionFilename{"/version"};
 const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
+
+// Keys
+const std::string kCPu{"cpu"};
+const std::string kProcesses{"processes"};
+const std::string kProcsRunning{"procs_running"};
+const std::string kVmSize{"VmSize:"};
+const std::string kUid{"Uid:"};
 
 std::string GetLineFromFile(const std::string&, const std::string&);
 std::vector<std::string> GetValuesFromLine(const std::string&);

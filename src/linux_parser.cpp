@@ -154,13 +154,13 @@ long LinuxParser::IdleJiffies() { return 0; }
 
 // Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() {
-  string line = GetLineFromFile(kProcDirectory + kStatFilename, "cpu");
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, kCpu);
   return GetValuesFromLine(line);
 }
 
 // Read and return the total number of processes
 int LinuxParser::TotalProcesses() {
-  string line = GetLineFromFile(kProcDirectory + kStatFilename, "processes");
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcesses);
   string value = GetValueFromLine(line);
   if (!value.empty()) {
     return stoi(value);
@@ -170,8 +170,7 @@ int LinuxParser::TotalProcesses() {
 
 // Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
-  string line =
-      GetLineFromFile(kProcDirectory + kStatFilename, "procs_running");
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcsRunning);
   string value = GetValueFromLine(line);
   if (!value.empty()) {
     return stoi(value);

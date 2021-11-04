@@ -116,9 +116,7 @@ float LinuxParser::MemoryUtilization() {
       linestream >> key >> value;
       values.push_back(value);
     }
-    if (values.size() > MEM_AVAIL_INDEX &&
-        !values.at(MEM_TOTAL_INDEX).empty() &&
-        !values.at(MEM_AVAIL_INDEX).empty()) {
+    if (values.size() > MEM_AVAIL_INDEX) {
       total = stol(values[MEM_TOTAL_INDEX]);
       available = stol(values[MEM_AVAIL_INDEX]);
       return (float)(total - available) / (float)total;
@@ -142,9 +140,20 @@ long LinuxParser::UpTime() {
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
 
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid [[maybe_unused]]) { return 0; }
+// Read and return the number of active jiffies for a PID
+long LinuxParser::ActiveJiffies(int pid) {
+  string line =
+      GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
+  vector<string> values = GetValuesFromLine(line);
+  if (values.size() > PID_CSTIME_INDEX) {
+    long utime = stol(values.at(PID_UTIME_INDEX));
+    long stime = stol(values.at(PID_STIME_INDEX));
+    long cutime = stol(values.at(PID_CUTIME_INDEX));
+    long cstime = stol(values.at(PID_CSTIME_INDEX));
+    return utime + stime + cutime + cstime;
+  }
+  return 0;
+}
 
 // TODO: Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies() { return 0; }
@@ -186,7 +195,7 @@ string LinuxParser::Command(int pid) {
 // Read and return the memory used by a process
 string LinuxParser::Ram(int pid) {
   string line = GetLineFromFile(
-      kPasswordPath + to_string(pid) + kStatusFilename, kVmSize);
+      kProcDirectory + to_string(pid) + kStatusFilename, kVmSize);
   return GetValueFromLine(line);
 }
 
@@ -227,8 +236,7 @@ long LinuxParser::UpTime(int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   vector<string> values = GetValuesFromLine(line);
-  if (values.size() >= PID_STARTTIME_INDEX &&
-      !values.at(PID_STARTTIME_INDEX).empty()) {
+  if (values.size() > PID_STARTTIME_INDEX) {
     long start_time = stol(values.at(PID_STARTTIME_INDEX));
     return UpTime() - (start_time / sysconf(_SC_CLK_TCK));
   }

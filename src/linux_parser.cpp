@@ -230,10 +230,7 @@ long LinuxParser::UpTime(int pid) {
   if (values.size() >= PID_STARTTIME_INDEX &&
       !values.at(PID_STARTTIME_INDEX).empty()) {
     long start_time = stol(values.at(PID_STARTTIME_INDEX));
-
-    // TODO: subtract pid start_time from system uptime??
-
-    return start_time / sysconf(_SC_CLK_TCK);
+    return UpTime() - (start_time / sysconf(_SC_CLK_TCK));
   }
 
   return 0;

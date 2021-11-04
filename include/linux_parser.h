@@ -32,7 +32,7 @@ const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
 // Keys
-const std::string kCPu{"cpu"};
+const std::string kCpu{"cpu"};
 const std::string kProcesses{"processes"};
 const std::string kProcsRunning{"procs_running"};
 const std::string kVmSize{"VmSize:"};

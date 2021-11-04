@@ -52,9 +52,9 @@ const std::string kProcsRunning{"procs_running"};
 const std::string kVmSize{"VmSize:"};
 const std::string kUid{"Uid:"};
 
-std::string GetLineFromFile(const std::string&, const std::string&);
-std::vector<std::string> GetValuesFromLine(const std::string&);
-std::string GetValueFromLine(const std::string&);
+std::string GetLineFromFile(const std::string& path, const std::string& key);
+std::vector<std::string> GetValuesFromLine(const std::string& line);
+std::string GetValueFromLine(const std::string& line);
 
 // System
 float MemoryUtilization();

@@ -14,14 +14,14 @@ using std::vector;
 // Returns line from file at given path whose first token matches key_in.
 // If key_in is not supplied, the first line of the file is returned.
 string LinuxParser::GetLineFromFile(const string& path,
-                                    const string& key_in = "") {
+                                    const string& key = "") {
   string line;
   std::ifstream filestream(path);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
-      if (key_in.empty()) {
+      if (key.empty()) {
         return line;
-      } else if (line.compare(0, key_in.length(), key_in) == 0) {
+      } else if (line.compare(0, key.length(), key) == 0) {
         return line;
       }
     }

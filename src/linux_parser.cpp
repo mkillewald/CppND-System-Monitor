@@ -183,18 +183,58 @@ string LinuxParser::Command(int pid) {
   return GetLineFromFile(kProcDirectory + to_string(pid) + kCmdlineFilename);
 }
 
-// TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid [[maybe_unused]]) { return string(); }
+// Read and return the memory used by a process
+string LinuxParser::Ram(int pid) {
+  string line = GetLineFromFile(
+      kPasswordPath + to_string(pid) + kStatusFilename, kVmSize);
+  return GetValueFromLine(line);
+}
 
-// TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Uid(int pid [[maybe_unused]]) { return string(); }
+// Read and return the user ID associated with a process
+string LinuxParser::Uid(int pid) {
+  string line =
+      GetLineFromFile(kProcDirectory + to_string(pid) + kStatusFilename, kUid);
+  return GetValueFromLine(line);
+}
 
-// TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid [[maybe_unused]]) { return string(); }
+// Read and return the user associated with a process
+string LinuxParser::User(int pid) {
+  string line;
+  string uid = Uid(pid);
+  std::ifstream filestream(kPasswordPath);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      int count = 0;
+      size_t pos = 0;
+      while (count < UID_INDEX) {
+        pos = line.find(":", pos);
+        if (pos == string::npos) {
+          return string();
+        }
+        pos++;
+        count++;
+      }
+      if (line.substr(pos, line.find(":", pos) - pos).compare(uid) == 0) {
+        return line.substr(0, line.find(":"));
+      }
+    }
+  }
+  return string();
+}
 
-// TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid [[maybe_unused]]) { return 0; }
+// Read and return the uptime of a process
+long LinuxParser::UpTime(int pid) {
+  string line =
+      GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
+  vector<string> values = GetValuesFromLine(line);
+  if (values.size() >= PID_STARTTIME_INDEX &&
+      !values.at(PID_STARTTIME_INDEX).empty()) {
+    long start_time = stol(values.at(PID_STARTTIME_INDEX));
+
+    // TODO: subtract pid start_time from system uptime??
+
+    return start_time / sysconf(_SC_CLK_TCK);
+  }
+
+  return 0;
+}

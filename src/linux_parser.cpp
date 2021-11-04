@@ -78,12 +78,12 @@ string LinuxParser::OperatingSystem() {
 
 // Read and return the system's kernel identifier (string)
 string LinuxParser::Kernel() {
-  vector<string> values =
-      LinuxParser::GetValuesFromLine(kProcDirectory + kVersionFilename);
+  string line = GetLineFromFile(kProcDirectory + kVersionFilename);
+  vector<string> values = GetValuesFromLine(line);
   return values.at(KERNEL_INDEX);
 }
 
-// BONUS: Update this to use std::filesystem
+// TODO: BONUS: Update this to use std::filesystem
 vector<int> LinuxParser::Pids() {
   vector<int> pids;
   DIR* directory = opendir(kProcDirectory.c_str());

@@ -137,29 +137,57 @@ long LinuxParser::UpTime() {
   return 0;
 }
 
-// TODO: Read and return the number of jiffies for the system
-long LinuxParser::Jiffies() { return 0; }
+// Read and return the number of jiffies for the system
+long LinuxParser::Jiffies() {
+  long total = 0;
+  vector<string> values = CpuUtilization();
+  if (values.size() > CPU_STEAL_INDEX) {
+    for (int i = CPU_USER_INDEX; i <= CPU_STEAL_INDEX; i++) {
+      total += stol(values.at(i));
+    }
+  }
+  return total;
+}
 
 // Read and return the number of active jiffies for a PID
 long LinuxParser::ActiveJiffies(int pid) {
+  long active = 0;
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   vector<string> values = GetValuesFromLine(line);
   if (values.size() > PID_CSTIME_INDEX) {
-    long utime = stol(values.at(PID_UTIME_INDEX));
-    long stime = stol(values.at(PID_STIME_INDEX));
-    long cutime = stol(values.at(PID_CUTIME_INDEX));
-    long cstime = stol(values.at(PID_CSTIME_INDEX));
-    return utime + stime + cutime + cstime;
+    for (int i = PID_UTIME_INDEX; i <= PID_CSTIME_INDEX; i++) {
+      active += stol(values.at(i));
+    }
   }
-  return 0;
+  return active;
 }
 
-// TODO: Read and return the number of active jiffies for the system
-long LinuxParser::ActiveJiffies() { return 0; }
+// Read and return the number of active jiffies for the system
+long LinuxParser::ActiveJiffies() {
+  long active = 0;
+  vector<string> values = CpuUtilization();
+  if (values.size() > CPU_STEAL_INDEX) {
+    active = stol(values.at(CPU_USER_INDEX));
+    active += stol(values.at(CPU_NICE_INDEX));
+    active += stol(values.at(CPU_SYSTEM_INDEX));
+    active += stol(values.at(CPU_IRQ_INDEX));
+    active += stol(values.at(CPU_SOFTIRQ_INDEX));
+    active += stol(values.at(CPU_STEAL_INDEX));
+  }
+  return active;
+}
 
-// TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { return 0; }
+// Read and return the number of idle jiffies for the system
+long LinuxParser::IdleJiffies() {
+  long idle = 0;
+  vector<string> values = CpuUtilization();
+  if (values.size() > CPU_IOWAIT_INDEX) {
+    idle = stol(values.at(CPU_IDLE_INDEX));
+    idle += stol(values.at(CPU_IOWAIT_INDEX));
+  }
+  return idle;
+}
 
 // Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() {

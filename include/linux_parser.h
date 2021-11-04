@@ -5,7 +5,14 @@
 #include <regex>
 #include <string>
 
+// indexes for /proc/version
 #define KERNEL_INDEX 2
+
+// indexes for /proc/meminfo
+#define MEM_TOTAL_INDEX 0
+#define MEM_AVAIL_INDEX 2
+
+// indexes for /proc/pid/stat
 #define PID_STARTTIME_INDEX 21
 
 namespace LinuxParser {
@@ -22,9 +29,8 @@ const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
 std::string GetLineFromFile(const std::string&, const std::string&);
-std::vector<std::string> GetValuesFromLine(const std::string&,
-                                           const std::string&);
-std::string GetValueForKey(const std::string&, const std::string&);
+std::vector<std::string> GetValuesFromLine(const std::string&);
+std::string GetValueFromLine(const std::string&);
 
 // System
 float MemoryUtilization();

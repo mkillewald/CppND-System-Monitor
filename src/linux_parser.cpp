@@ -29,15 +29,10 @@ string LinuxParser::GetLineFromFile(const string& path,
   return line;
 }
 
-// Finds a line in file at given path whose first token matches key_in, and
-// returns it as a tokenized vector of strings. If key_in is not supplied, the
-// first line of the file is tokenized and returned.
-// Note: If key_in is supplied, item 0 in the returned vector will match key_in,
-// and the values will start at item 1
-vector<string> LinuxParser::GetValuesFromLine(const string& path,
-                                              const string& key_in = "") {
+// Tokenizes the input string and returns of vector of strings containing the
+// tokens.
+vector<string> LinuxParser::GetValuesFromLine(const string& line) {
   string value;
-  string line = GetLineFromFile(path, key_in);
   vector<string> values;
   if (!line.empty()) {
     std::istringstream linestream(line);
@@ -48,13 +43,9 @@ vector<string> LinuxParser::GetValuesFromLine(const string& path,
   return values;
 }
 
-// Returns string value from a line in file at given path whose first token
-// matches key_in
-// Note: this is useful only if the line in the file contains a single key,
-// value pair.
-string LinuxParser::GetValueForKey(const string& path, const string& key_in) {
+// Returns a string value from an input string containing a key value pair
+string LinuxParser::GetValueFromLine(const string& line) {
   string key, value;
-  string line = GetLineFromFile(path, key_in);
   if (!line.empty()) {
     std::istringstream linestream(line);
     linestream >> key >> value;
@@ -125,9 +116,13 @@ float LinuxParser::MemoryUtilization() {
       linestream >> key >> value;
       values.push_back(value);
     }
-    total = stol(values[0]);
-    available = stol(values[2]);
-    return (float)(total - available) / (float)total;
+    if (values.size() > MEM_AVAIL_INDEX &&
+        !values.at(MEM_TOTAL_INDEX).empty() &&
+        !values.at(MEM_AVAIL_INDEX).empty()) {
+      total = stol(values[MEM_TOTAL_INDEX]);
+      available = stol(values[MEM_AVAIL_INDEX]);
+      return (float)(total - available) / (float)total;
+    }
   }
   return 0.0;
 }
@@ -135,7 +130,7 @@ float LinuxParser::MemoryUtilization() {
 // Read and return the system uptime
 long LinuxParser::UpTime() {
   string uptime;
-  string line = LinuxParser::GetLineFromFile(kProcDirectory + kUptimeFilename);
+  string line = GetLineFromFile(kProcDirectory + kUptimeFilename);
   if (!line.empty()) {
     std::istringstream linestream(line);
     linestream >> uptime;
@@ -159,12 +154,14 @@ long LinuxParser::IdleJiffies() { return 0; }
 
 // Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() {
-  return GetValuesFromLine(kProcDirectory + kStatFilename, "cpu");
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, "cpu");
+  return GetValuesFromLine(line);
 }
 
 // Read and return the total number of processes
 int LinuxParser::TotalProcesses() {
-  string value = GetValueForKey(kProcDirectory + kStatFilename, "processes");
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, "processes");
+  string value = GetValueFromLine(line);
   if (!value.empty()) {
     return stoi(value);
   }
@@ -173,8 +170,9 @@ int LinuxParser::TotalProcesses() {
 
 // Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
-  string value =
-      GetValueForKey(kProcDirectory + kStatFilename, "procs_running");
+  string line =
+      GetLineFromFile(kProcDirectory + kStatFilename, "procs_running");
+  string value = GetValueFromLine(line);
   if (!value.empty()) {
     return stoi(value);
   }
@@ -183,12 +181,7 @@ int LinuxParser::RunningProcesses() {
 
 // Read and return the command associated with a process
 string LinuxParser::Command(int pid) {
-  string line;
-  std::ifstream filestream(kProcDirectory + to_string(pid) + kCmdlineFilename);
-  if (filestream.is_open()) {
-    std::getline(filestream, line);
-  }
-  return line;
+  return GetLineFromFile(kProcDirectory + to_string(pid) + kCmdlineFilename);
 }
 
 // TODO: Read and return the memory used by a process

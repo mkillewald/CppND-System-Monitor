@@ -26,7 +26,14 @@ float Process::CpuUtilization() { return 0; }
 string Process::Command() { return command_; }
 
 // Return this process's memory utilization
-string Process::Ram() { return LinuxParser::Ram(Pid()); }
+string Process::Ram() {
+  string ram_mb;
+  string ram_kb = LinuxParser::Ram(Pid());
+  if (!ram_kb.empty()) {
+    ram_mb = to_string(stol(ram_kb) / 1000);
+  }
+  return ram_mb;
+}
 
 // Return the user (name) that generated this process
 string Process::User() { return user_; }

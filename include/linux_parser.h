@@ -12,7 +12,21 @@
 #define MEM_TOTAL_INDEX 0
 #define MEM_AVAIL_INDEX 2
 
+// data indexes for CPU info lines in /proc/stat
+#define CPU_USER_INDEX 1
+#define CPU_NICE_INDEX 2
+#define CPU_SYSTEM_INDEX 3
+#define CPU_IDLE_INDEX 4
+#define CPU_IOWAIT_INDEX 5
+#define CPU_IRQ_INDEX 6
+#define CPU_SOFTIRQ_INDEX 7
+#define CPU_STEAL_INDEX 8
+
 // data indexes for /proc/pid/stat
+#define PID_UTIME_INDEX 13
+#define PID_STIME_INDEX 14
+#define PID_CUTIME_INDEX 15
+#define PID_CSTIME_INDEX 16
 #define PID_STARTTIME_INDEX 21
 
 // data indexes for /etc/password

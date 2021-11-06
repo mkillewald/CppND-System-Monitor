@@ -23,6 +23,7 @@
 #define CPU_STEAL_INDEX 8
 
 // data indexes for /proc/pid/stat
+#define PID_STATE_INDEX 2
 #define PID_UTIME_INDEX 13
 #define PID_STIME_INDEX 14
 #define PID_CUTIME_INDEX 15
@@ -52,9 +53,11 @@ const std::string kProcsRunning{"procs_running"};
 const std::string kVmSize{"VmSize:"};
 const std::string kUid{"Uid:"};
 
+// Helpers
 std::string GetLineFromFile(const std::string& path, const std::string& key);
 std::vector<std::string> GetValuesFromLine(const std::string& line);
-std::string GetValueFromLine(const std::string& line);
+std::string GetValueFromLine(const std::string& line, const int index);
+void FixFilenameInParens(std::string& line);
 
 // System
 float MemoryUtilization();
@@ -90,6 +93,7 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 std::string User(int pid);
 long int UpTime(int pid);
+std::string State(int pid);
 };  // namespace LinuxParser
 
 #endif

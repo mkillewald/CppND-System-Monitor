@@ -21,11 +21,13 @@ Processor& System::Cpu() { return cpu_; }
 
 // Return a container composed of the system's processes
 vector<Process>& System::Processes() {
-  // processes_ = {};
-  for (auto& pid : LinuxParser::Pids()) {
-    processes_.emplace_back(
-        Process(pid, LinuxParser::User(pid), LinuxParser::Command(pid)));
+  vector<Process> processes;
+  for (int& pid : LinuxParser::Pids()) {
+    processes.emplace_back(Process(pid));
   }
+  std::sort(processes.begin(), processes.end(),
+            [](Process& a, Process& b) { return b < a; });
+  processes_.swap(processes);
   return processes_;
 }
 

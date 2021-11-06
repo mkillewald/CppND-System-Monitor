@@ -51,14 +51,34 @@ vector<string> LinuxParser::GetValuesFromLine(const string& line) {
 }
 
 /*
- * Returns the string value from an input string containing a white space
- * delimited key/value pair.
+ * Returns the token at given index from an white space deliminated input
+ * string. Will return the first token if no index is supplied. If the input
+ * line is empty, or an out of range index was supplied, then will return an
+ * empty string.
  */
-string LinuxParser::GetValueFromLine(const string& line) {
-  string key, value;
+string LinuxParser::GetValueFromLine(const string& line, const int index = 0) {
+  string value;
   std::istringstream linestream(line);
-  linestream >> key >> value;
-  return value;
+  int count = 0;
+  while (linestream >> value) {
+    if (index == count) {
+      return value;
+    }
+    count++;
+  }
+
+  return string();
+}
+
+/*
+ * Sometimes the filename aka "comm" field in /proc/pid/stat contains spaces.
+ * This will replace those spaces with an underscore to allow for correct
+ * tokenization of the line
+ */
+void LinuxParser::FixFilenameInParens(string& line) {
+  size_t l_paren = line.find('(');
+  size_t r_paren = line.find(')', l_paren + 1);
+  std::replace(line.begin() + l_paren, line.begin() + r_paren, ' ', '_');
 }
 
 // Read and return the operating system name
@@ -85,11 +105,7 @@ string LinuxParser::OperatingSystem() {
 // Read and return the system's kernel identifier (string)
 string LinuxParser::Kernel() {
   string line = GetLineFromFile(kProcDirectory + kVersionFilename);
-  vector<string> values = GetValuesFromLine(line);
-  if (values.size() > KERNEL_INDEX) {
-    return values.at(KERNEL_INDEX);
-  }
-  return string();
+  return GetValueFromLine(line, KERNEL_INDEX);
 }
 
 // TODO: BONUS: Update this to use std::filesystem
@@ -163,9 +179,11 @@ long LinuxParser::ActiveJiffies(int pid) {
   long active = 0;
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
+  FixFilenameInParens(line);
   vector<string> values = GetValuesFromLine(line);
-  if (values.size() > PID_CSTIME_INDEX) {
-    for (int i = PID_UTIME_INDEX; i <= PID_CSTIME_INDEX; i++) {
+
+  if (values.size() > PID_STIME_INDEX) {
+    for (int i = PID_UTIME_INDEX; i <= PID_STIME_INDEX; i++) {
       active += stol(values.at(i));
     }
   }
@@ -207,7 +225,7 @@ vector<string> LinuxParser::CpuUtilization() {
 // Read and return the total number of processes
 int LinuxParser::TotalProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcesses);
-  string value = GetValueFromLine(line);
+  string value = GetValueFromLine(line, 1);
   if (value.empty()) {
     return 0;
   }
@@ -217,7 +235,7 @@ int LinuxParser::TotalProcesses() {
 // Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcsRunning);
-  string value = GetValueFromLine(line);
+  string value = GetValueFromLine(line, 1);
   if (value.empty()) {
     return 0;
   }
@@ -233,14 +251,14 @@ string LinuxParser::Command(int pid) {
 string LinuxParser::Ram(int pid) {
   string line = GetLineFromFile(
       kProcDirectory + to_string(pid) + kStatusFilename, kVmSize);
-  return GetValueFromLine(line);
+  return GetValueFromLine(line, 1);
 }
 
 // Read and return the user ID associated with a process
 string LinuxParser::Uid(int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatusFilename, kUid);
-  return GetValueFromLine(line);
+  return GetValueFromLine(line, 1);
 }
 
 // Read and return the user associated with a process
@@ -272,10 +290,19 @@ string LinuxParser::User(int pid) {
 long LinuxParser::UpTime(int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
-  vector<string> values = GetValuesFromLine(line);
-  if (values.size() > PID_STARTTIME_INDEX) {
-    long start_time = stol(values.at(PID_STARTTIME_INDEX));
-    return UpTime() - (start_time / sysconf(_SC_CLK_TCK));
+  FixFilenameInParens(line);
+  string start_time_str = GetValueFromLine(line, PID_STARTTIME_INDEX);
+  if (start_time_str.empty()) {
+    return 0;
   }
-  return 0;
+  long start_time = stol(start_time_str);
+  return UpTime() - (start_time / sysconf(_SC_CLK_TCK));
+}
+
+// Read and return the state of a process
+string LinuxParser::State(int pid) {
+  string line =
+      GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
+  FixFilenameInParens(line);
+  return GetValueFromLine(line, PID_STATE_INDEX);
 }

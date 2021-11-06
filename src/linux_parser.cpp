@@ -77,6 +77,9 @@ string LinuxParser::GetValueFromLine(const string& line, const int index = 0) {
  */
 void LinuxParser::FixFilenameInParens(string& line) {
   size_t l_paren = line.find('(');
+  if (l_paren == string::npos) {
+    return;
+  }
   size_t r_paren = line.find(')', l_paren + 1);
   std::replace(line.begin() + l_paren, line.begin() + r_paren, ' ', '_');
 }

@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <cctype>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -13,8 +14,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Process::Process(int pid, string user, string command)
-    : pid_(pid), user_(user), command_(command){};
+Process::Process(int pid) : pid_(pid){};
 
 // Return this process's ID
 int Process::Pid() const { return pid_; }
@@ -22,31 +22,35 @@ int Process::Pid() const { return pid_; }
 // Return this process's CPU utilization
 float Process::CpuUtilization() const {
   long active_sec = LinuxParser::ActiveJiffies(Pid()) / sysconf(_SC_CLK_TCK);
-  return 100.0 * (active_sec / Process::UpTime());
+  long process_uptime = Process::UpTime();
+  if (process_uptime > 0) {
+    return (float)active_sec / (float)process_uptime;
+  }
+  return 0.0;
 }
 
 // Return the command that generated this process
-string Process::Command() const { return command_; }
+string Process::Command() const { return LinuxParser::Command(Pid()); }
 
 // Return this process's memory utilization
 string Process::Ram() const {
   string ram_kb = LinuxParser::Ram(Pid());
   if (ram_kb.empty()) {
-    return string();
+    return "0";
   }
-  std::ostringstream o_stream;
-  o_stream.precision(5);
-  o_stream << stof(ram_kb) / 1000.0;
-  return o_stream.str();
+  return to_string(stof(ram_kb) / 1000.0);
 }
 
 // Return the user (name) that generated this process
-string Process::User() const { return user_; }
+string Process::User() const { return LinuxParser::User(Pid()); }
 
 // Return the age of this process (in seconds)
 long int Process::UpTime() const { return LinuxParser::UpTime(Pid()); }
 
-// TODO: Overload the "less than" comparison operator for Process objects
+// Return the state of this process
+string Process::State() const { return LinuxParser::State(Pid()); }
+
+// Overload the "less than" comparison operator for Process objects
 bool Process::operator<(Process const& a) const {
   return CpuUtilization() < a.CpuUtilization();
 }

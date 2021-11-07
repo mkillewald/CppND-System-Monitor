@@ -5,34 +5,6 @@
 #include <regex>
 #include <string>
 
-// data indexes for /proc/version
-#define KERNEL_INDEX 2
-
-// data indexes for /proc/meminfo
-#define MEM_TOTAL_INDEX 0
-#define MEM_AVAIL_INDEX 2
-
-// data indexes for CPU info lines in /proc/stat
-#define CPU_USER_INDEX 1
-#define CPU_NICE_INDEX 2
-#define CPU_SYSTEM_INDEX 3
-#define CPU_IDLE_INDEX 4
-#define CPU_IOWAIT_INDEX 5
-#define CPU_IRQ_INDEX 6
-#define CPU_SOFTIRQ_INDEX 7
-#define CPU_STEAL_INDEX 8
-
-// data indexes for /proc/pid/stat
-#define PID_STATE_INDEX 2
-#define PID_UTIME_INDEX 13
-#define PID_STIME_INDEX 14
-#define PID_CUTIME_INDEX 15
-#define PID_CSTIME_INDEX 16
-#define PID_STARTTIME_INDEX 21
-
-// data indexes for /etc/password
-#define UID_INDEX 2
-
 namespace LinuxParser {
 // Paths
 const std::string kProcDirectory{"/proc/"};
@@ -53,6 +25,39 @@ const std::string kProcsRunning{"procs_running"};
 const std::string kVmSize{"VmSize:"};
 const std::string kUid{"Uid:"};
 
+// /etc/passwd
+enum User { kUid_ = 2 };
+
+// /proc/version
+enum Version { kKernel_ = 2 };
+
+// /proc/meminfo
+enum Meminfo { kTotal_ = 0, kAvail_ = 2 };
+
+// /proc/stat CPU info
+enum CPUStates {
+  kUser_ = 1,
+  kNice_,
+  kSystem_,
+  kIdle_,
+  kIOwait_,
+  kIRQ_,
+  kSoftIRQ_,
+  kSteal_,
+  kGuest_,
+  kGuestNice_
+};
+
+// /proc/[Pid]/Stat
+enum PidStat {
+  kState_ = 2,
+  kUtime_ = 13,
+  kStime_,
+  kCUtime_,
+  kCStime_,
+  kStartTime_ = 21
+};
+
 // Helpers
 std::string GetLineFromFile(const std::string& path, const std::string& key);
 std::vector<std::string> GetValuesFromLine(const std::string& line);
@@ -67,24 +72,9 @@ int TotalProcesses();
 int RunningProcesses();
 std::string OperatingSystem();
 std::string Kernel();
-
-// CPU
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
-};
 std::vector<std::string> CpuUtilization();
 long Jiffies();
 long ActiveJiffies();
-long ActiveJiffies(int pid);
 long IdleJiffies();
 
 // Processes
@@ -93,6 +83,7 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 std::string User(int pid);
 long int UpTime(int pid);
+long ActiveJiffies(int pid);
 std::string State(int pid);
 };  // namespace LinuxParser
 

@@ -84,7 +84,6 @@ void LinuxParser::FixFilenameInParens(string& line) {
   std::replace(line.begin() + l_paren, line.begin() + r_paren, ' ', '_');
 }
 
-// Read and return the operating system name
 string LinuxParser::OperatingSystem() {
   string key, value, line;
   std::ifstream filestream(kOSPath);
@@ -105,10 +104,9 @@ string LinuxParser::OperatingSystem() {
   return value;
 }
 
-// Read and return the system's kernel identifier (string)
 string LinuxParser::Kernel() {
   string line = GetLineFromFile(kProcDirectory + kVersionFilename);
-  return GetValueFromLine(line, KERNEL_INDEX);
+  return GetValueFromLine(line, Version::kKernel_);
 }
 
 // TODO: BONUS: Update this to use std::filesystem
@@ -131,7 +129,6 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-// Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() {
   string key, value, line;
   vector<string> values;
@@ -144,16 +141,15 @@ float LinuxParser::MemoryUtilization() {
       linestream >> key >> value;
       values.push_back(value);
     }
-    if (values.size() > MEM_AVAIL_INDEX) {
-      total = stol(values.at(MEM_TOTAL_INDEX));
-      available = stol(values.at(MEM_AVAIL_INDEX));
+    if (values.size() > Meminfo::kAvail_) {
+      total = stol(values.at(Meminfo::kTotal_));
+      available = stol(values.at(Meminfo::kAvail_));
       return (float)(total - available) / (float)total;
     }
   }
   return 0.0;
 }
 
-// Read and return the system uptime
 long LinuxParser::UpTime() {
   string uptime;
   string line = GetLineFromFile(kProcDirectory + kUptimeFilename);
@@ -165,67 +161,46 @@ long LinuxParser::UpTime() {
   return stol(uptime);
 }
 
-// Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
   long total = 0;
   vector<string> values = CpuUtilization();
-  if (values.size() > CPU_STEAL_INDEX) {
-    for (int i = CPU_USER_INDEX; i <= CPU_STEAL_INDEX; i++) {
+  if (values.size() > CPUStates::kSteal_) {
+    for (int i = CPUStates::kUser_; i <= CPUStates::kSteal_; i++) {
       total += stol(values.at(i));
     }
   }
   return total;
 }
 
-// Read and return the number of active jiffies for a PID
-long LinuxParser::ActiveJiffies(int pid) {
-  long active = 0;
-  string line =
-      GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
-  FixFilenameInParens(line);
-  vector<string> values = GetValuesFromLine(line);
-
-  if (values.size() > PID_STIME_INDEX) {
-    for (int i = PID_UTIME_INDEX; i <= PID_STIME_INDEX; i++) {
-      active += stol(values.at(i));
-    }
-  }
-  return active;
-}
-
-// Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies() {
   long active = 0;
   vector<string> values = CpuUtilization();
-  if (values.size() > CPU_STEAL_INDEX) {
-    active = stol(values.at(CPU_USER_INDEX));
-    active += stol(values.at(CPU_NICE_INDEX));
-    active += stol(values.at(CPU_SYSTEM_INDEX));
-    active += stol(values.at(CPU_IRQ_INDEX));
-    active += stol(values.at(CPU_SOFTIRQ_INDEX));
-    active += stol(values.at(CPU_STEAL_INDEX));
+  if (values.size() > CPUStates::kSteal_) {
+    active = stol(values.at(CPUStates::kUser_));
+    active += stol(values.at(CPUStates::kNice_));
+    active += stol(values.at(CPUStates::kSystem_));
+    active += stol(values.at(CPUStates::kIRQ_));
+    active += stol(values.at(CPUStates::kSoftIRQ_));
+    active += stol(values.at(CPUStates::kSteal_));
   }
   return active;
 }
 
-// Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() {
   long idle = 0;
   vector<string> values = CpuUtilization();
-  if (values.size() > CPU_IOWAIT_INDEX) {
-    idle = stol(values.at(CPU_IDLE_INDEX));
-    idle += stol(values.at(CPU_IOWAIT_INDEX));
+  if (values.size() > CPUStates::kIOwait_) {
+    idle = stol(values.at(CPUStates::kIdle_));
+    idle += stol(values.at(CPUStates::kIOwait_));
   }
   return idle;
 }
 
-// Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kCpu);
   return GetValuesFromLine(line);
 }
 
-// Read and return the total number of processes
 int LinuxParser::TotalProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcesses);
   string value = GetValueFromLine(line, 1);
@@ -235,7 +210,6 @@ int LinuxParser::TotalProcesses() {
   return stoi(value);
 }
 
-// Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcsRunning);
   string value = GetValueFromLine(line, 1);
@@ -245,26 +219,22 @@ int LinuxParser::RunningProcesses() {
   return stoi(value);
 }
 
-// Read and return the command associated with a process
 string LinuxParser::Command(int pid) {
   return GetLineFromFile(kProcDirectory + to_string(pid) + kCmdlineFilename);
 }
 
-// Read and return the memory used by a process
 string LinuxParser::Ram(int pid) {
   string line = GetLineFromFile(
       kProcDirectory + to_string(pid) + kStatusFilename, kVmSize);
   return GetValueFromLine(line, 1);
 }
 
-// Read and return the user ID associated with a process
 string LinuxParser::Uid(int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatusFilename, kUid);
   return GetValueFromLine(line, 1);
 }
 
-// Read and return the user associated with a process
 string LinuxParser::User(int pid) {
   string line;
   string uid = Uid(pid);
@@ -273,7 +243,7 @@ string LinuxParser::User(int pid) {
     while (std::getline(filestream, line)) {
       int count = 0;
       size_t pos = 0;
-      while (count < UID_INDEX) {
+      while (count < User::kUid_) {
         pos = line.find(":", pos);
         if (pos == string::npos) {
           return string();
@@ -289,12 +259,11 @@ string LinuxParser::User(int pid) {
   return string();
 }
 
-// Read and return the uptime of a process
 long LinuxParser::UpTime(int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   FixFilenameInParens(line);
-  string start_time_str = GetValueFromLine(line, PID_STARTTIME_INDEX);
+  string start_time_str = GetValueFromLine(line, PidStat::kStartTime_);
   if (start_time_str.empty()) {
     return 0;
   }
@@ -302,10 +271,24 @@ long LinuxParser::UpTime(int pid) {
   return UpTime() - (start_time / sysconf(_SC_CLK_TCK));
 }
 
-// Read and return the state of a process
+long LinuxParser::ActiveJiffies(int pid) {
+  long active = 0;
+  string line =
+      GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
+  FixFilenameInParens(line);
+  vector<string> values = GetValuesFromLine(line);
+
+  if (values.size() > PidStat::kStime_) {
+    for (int i = PidStat::kUtime_; i <= PidStat::kStime_; i++) {
+      active += stol(values.at(i));
+    }
+  }
+  return active;
+}
+
 string LinuxParser::State(int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   FixFilenameInParens(line);
-  return GetValueFromLine(line, PID_STATE_INDEX);
+  return GetValueFromLine(line, PidStat::kState_);
 }

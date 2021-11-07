@@ -59,8 +59,8 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   int row{0};
   int const pid_column{2};
   int const user_column{9};
-  int const state_column{16};
-  int const cpu_column{18};
+  int const state_column{17};
+  int const cpu_column{20};
   int const ram_column{26};
   int const time_column{35};
   int const command_column{46};
@@ -68,7 +68,7 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   mvwprintw(window, ++row, pid_column, "PID");
   mvwprintw(window, row, user_column, "USER");
   mvwprintw(window, row, state_column, "S");
-  mvwprintw(window, row, cpu_column, "CPU[%%]");
+  mvwprintw(window, row, cpu_column, "CPU%%");
   mvwprintw(window, row, ram_column, "RAM[MB]");
   mvwprintw(window, row, time_column, "TIME+");
   mvwprintw(window, row, command_column, "COMMAND");
@@ -81,7 +81,7 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
     mvwprintw(window, row, pid_column, to_string(processes[i].Pid()).c_str());
     mvwprintw(
         window, row, user_column,
-        processes[i].User().substr(0, state_column - user_column - 1).c_str());
+        processes[i].User().substr(0, state_column - user_column - 2).c_str());
     mvwprintw(window, row, state_column, processes[i].State().c_str());
     float cpu = processes[i].CpuUtilization() * 100;
     mvwprintw(window, row, cpu_column, to_string(cpu).substr(0, 4).c_str());

@@ -48,7 +48,7 @@ enum CPUStates {
   kGuestNice_
 };
 
-// /proc/[Pid]/Stat
+// /proc/[pid]/stat
 enum PidStat {
   kState_ = 2,
   kUtime_ = 13,

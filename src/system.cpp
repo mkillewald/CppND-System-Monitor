@@ -50,10 +50,8 @@ void System::AddProcesses() {
 void System::RemoveProcesses() {
   // Sort by State(). Killed processes will have an empty string because it
   // could not be read from file.
-  std::sort(processes_.begin(), processes_.end(), [](Process& a, Process& b) {
-    return a.State() > b.State();
-    // return std::stof(a.Ram()) > std::stof(b.Ram());
-  });
+  std::sort(processes_.begin(), processes_.end(),
+            [](Process& a, Process& b) { return a.State() > b.State(); });
 
   // Verify state of process is an empty string, and pop it off
   while (processes_.back().State().empty()) {

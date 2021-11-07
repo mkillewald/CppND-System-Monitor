@@ -21,6 +21,10 @@ class System {
  private:
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
+
+  void AddProcesses();
+  void RemoveProcesses();
+  void SortProcesses();
 };
 
 #endif

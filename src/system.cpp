@@ -16,39 +16,59 @@ using std::size_t;
 using std::string;
 using std::vector;
 
-// Return the system's CPU
 Processor& System::Cpu() { return cpu_; }
-
-// Return a container composed of the system's processes
-vector<Process>& System::Processes() {
-  vector<Process> processes;
-  for (int& pid : LinuxParser::Pids()) {
-    processes.emplace_back(Process(pid));
-  }
-  std::sort(processes.begin(), processes.end(),
-            [](Process& a, Process& b) { return b < a; });
-  processes_.swap(processes);
-  return processes_;
-}
-
-// Return the system's kernel identifier (string)
 std::string System::Kernel() const { return LinuxParser::Kernel(); }
+int System::RunningProcesses() const { return LinuxParser::RunningProcesses(); }
+int System::TotalProcesses() const { return LinuxParser::TotalProcesses(); }
+long int System::UpTime() const { return LinuxParser::UpTime(); }
 
-// Return the system's memory utilization
 float System::MemoryUtilization() const {
   return LinuxParser::MemoryUtilization();
 }
 
-// Return the operating system name
 std::string System::OperatingSystem() const {
   return LinuxParser::OperatingSystem();
 }
 
-// Return the number of processes actively running on the system
-int System::RunningProcesses() const { return LinuxParser::RunningProcesses(); }
+/*
+ * Add new processes to processes_ vector
+ */
+void System::AddProcesses() {
+  for (int& pid : LinuxParser::Pids()) {
+    Process process = Process(pid);
+    if (!process.Command().empty() &&
+        std::find(processes_.begin(), processes_.end(), process) ==
+            processes_.end()) {
+      processes_.emplace_back(process);
+    }
+  }
+}
 
-// Return the total number of processes on the system
-int System::TotalProcesses() const { return LinuxParser::TotalProcesses(); }
+/*
+ * Removed killed processes from the processes_ vector
+ */
+void System::RemoveProcesses() {
+  // Sort by State(). Killed processes will have an empty string because it
+  // could not be read from file.
+  std::sort(processes_.begin(), processes_.end(), [](Process& a, Process& b) {
+    return a.State() > b.State();
+    // return std::stof(a.Ram()) > std::stof(b.Ram());
+  });
 
-// Return the number of seconds since the system started running
-long int System::UpTime() const { return LinuxParser::UpTime(); }
+  // Verify state of process is an empty string, and pop it off
+  while (processes_.back().State().empty()) {
+    processes_.pop_back();
+  }
+}
+
+void System::SortProcesses() {
+  std::sort(processes_.begin(), processes_.end(),
+            [](Process& a, Process& b) { return b < a; });
+}
+
+vector<Process>& System::Processes() {
+  AddProcesses();
+  RemoveProcesses();
+  SortProcesses();
+  return processes_;
+}

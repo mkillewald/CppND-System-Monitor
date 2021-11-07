@@ -8,7 +8,6 @@
 using std::string;
 using std::vector;
 
-// Return the aggregate CPU utilization
 float Processor::Utilization() {
   long total = LinuxParser::Jiffies();
   long idle = LinuxParser::IdleJiffies();

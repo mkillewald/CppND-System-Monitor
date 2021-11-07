@@ -14,12 +14,18 @@ class Process {
   std::string Command() const;
   float CpuUtilization() const;
   std::string Ram() const;
-  long int UpTime() const;
+  long UpTime() const;
   std::string State() const;
   bool operator<(Process const& a) const;
+  bool operator==(Process const& a) const;
 
  private:
   int pid_;
+  std::string user_;
+  std::string command_;
+  mutable long active_;
+  mutable long uptime_;
+  mutable float cpu_util_;
 };
 
 #endif

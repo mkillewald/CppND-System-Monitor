@@ -14,43 +14,45 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Process::Process(int pid) : pid_(pid){};
+Process::Process(int pid) : pid_(pid) {
+  user_ = LinuxParser::User(pid);
+  command_ = LinuxParser::Command(pid);
+  active_ = LinuxParser::ActiveJiffies(pid);
+  uptime_ = LinuxParser::UpTime(pid);
+  cpu_util_ = 0.0;
+};
 
-// Return this process's ID
 int Process::Pid() const { return pid_; }
+string Process::User() const { return user_; }
+string Process::Command() const { return command_; }
+long Process::UpTime() const { return LinuxParser::UpTime(Pid()); }
+string Process::State() const { return LinuxParser::State(Pid()); }
 
-// Return this process's CPU utilization
 float Process::CpuUtilization() const {
-  long active_sec = LinuxParser::ActiveJiffies(Pid()) / sysconf(_SC_CLK_TCK);
-  long process_uptime = Process::UpTime();
-  if (process_uptime > 0) {
-    return (float)active_sec / (float)process_uptime;
+  long active_now = LinuxParser::ActiveJiffies(Pid());
+  long uptime_now = UpTime();
+  long active_d = active_now - active_;
+  long uptime_d = uptime_now - uptime_;
+  if (uptime_d > 0) {
+    active_ = active_now;
+    uptime_ = uptime_now;
+    cpu_util_ =
+        ((float)active_d / (float)sysconf(_SC_CLK_TCK)) / (float)uptime_d;
   }
-  return 0.0;
+  return cpu_util_;
 }
 
-// Return the command that generated this process
-string Process::Command() const { return LinuxParser::Command(Pid()); }
-
-// Return this process's memory utilization
 string Process::Ram() const {
   string ram_kb = LinuxParser::Ram(Pid());
   if (ram_kb.empty()) {
+    // good indication this proccess has been killed
     return "0";
   }
-  return to_string(stof(ram_kb) / 1000.0);
+  return to_string(std::stof(ram_kb) / 1000.0);
 }
 
-// Return the user (name) that generated this process
-string Process::User() const { return LinuxParser::User(Pid()); }
-
-// Return the age of this process (in seconds)
-long int Process::UpTime() const { return LinuxParser::UpTime(Pid()); }
-
-// Return the state of this process
-string Process::State() const { return LinuxParser::State(Pid()); }
-
-// Overload the "less than" comparison operator for Process objects
 bool Process::operator<(Process const& a) const {
   return CpuUtilization() < a.CpuUtilization();
 }
+
+bool Process::operator==(Process const& a) const { return Pid() == a.Pid(); }

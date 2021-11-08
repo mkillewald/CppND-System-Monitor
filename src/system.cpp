@@ -46,7 +46,7 @@ void System::AddProcesses() {
 }
 
 /*
- * Removed killed processes from the processes_ vector
+ * Remove killed processes from the processes_ vector
  */
 void System::RemoveProcesses() {
   // Sort by State(). Killed processes will have an empty string because it
@@ -55,7 +55,7 @@ void System::RemoveProcesses() {
             [](Process& a, Process& b) { return a.State() > b.State(); });
 
   // Verify state of process is an empty string, and pop it off
-  while (processes_.back().State().empty()) {
+  while (processes_.size() > 0 && processes_.back().State().empty()) {
     processes_.pop_back();
   }
 }
@@ -66,8 +66,8 @@ void System::SortProcesses() {
 }
 
 vector<Process>& System::Processes() {
-  AddProcesses();
   RemoveProcesses();
+  AddProcesses();
   SortProcesses();
   return processes_;
 }

@@ -35,11 +35,12 @@ std::string System::OperatingSystem() const {
  */
 void System::AddProcesses() {
   for (int& pid : LinuxParser::Pids()) {
-    Process process = Process(pid);
-    if (!process.Command().empty() &&
-        std::find(processes_.begin(), processes_.end(), process) ==
-            processes_.end()) {
-      processes_.emplace_back(process);
+    if (std::find(processes_.begin(), processes_.end(), pid) ==
+        processes_.end()) {
+      string command = LinuxParser::Command(pid);
+      if (!command.empty()) {
+        processes_.emplace_back(Process(pid, command));
+      }
     }
   }
 }

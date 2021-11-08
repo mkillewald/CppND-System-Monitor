@@ -8,7 +8,7 @@ It contains relevant attributes as shown below
 */
 class Process {
  public:
-  Process(int pid);
+  Process(int pid, std::string& cmd);
   int Pid() const;
   std::string User() const;
   std::string Command() const;
@@ -17,7 +17,7 @@ class Process {
   long UpTime() const;
   std::string State() const;
   bool operator<(Process const& a) const;
-  bool operator==(Process const& a) const;
+  bool operator==(int const& a) const;
 
  private:
   int pid_;

@@ -14,9 +14,8 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Process::Process(int pid) : pid_(pid) {
+Process::Process(int pid, string& command) : pid_(pid), command_(command) {
   user_ = LinuxParser::User(pid);
-  command_ = LinuxParser::Command(pid);
   active_ = LinuxParser::ActiveJiffies(pid);
   uptime_ = LinuxParser::UpTime(pid);
   cpu_util_ = 0.0;
@@ -55,4 +54,5 @@ bool Process::operator<(Process const& a) const {
   return CpuUtilization() < a.CpuUtilization();
 }
 
-bool Process::operator==(Process const& a) const { return Pid() == a.Pid(); }
+bool Process::operator==(int const& a) const { return Pid() == a; }
+// bool Process::operator==(Process const& a) const { return Pid() == a.Pid(); }

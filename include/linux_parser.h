@@ -25,17 +25,26 @@ const std::string kVmSize{"VmSize:"};
 const std::string kUid{"Uid:"};
 
 // /etc/passwd
-enum User { kUid_ = 2 };
+enum User { kUserName_ = 0, kPasswd_, kUid_, kGid_, kGecos_, kHome_, kShell_ };
 
 // /proc/version
-enum Version { kKernel_ = 2 };
+enum Version {
+  kOSType_ = 0,
+  kVersionKey_,
+  kKernel_,
+  kCompiledBy_,
+  kGCCVersion_,
+  kType_,
+  kDate_
+};
 
 // /proc/meminfo
-enum Meminfo { kTotal_ = 0, kAvail_ = 2 };
+enum Meminfo { kTotal_ = 0, kFree_, kAvail_, kBuffers_ };
 
 // /proc/stat CPU info
 enum CPUStates {
-  kUser_ = 1,
+  kCpuKey_ = 0,
+  kUser_,
   kNice_,
   kSystem_,
   kIdle_,
@@ -49,12 +58,28 @@ enum CPUStates {
 
 // /proc/[pid]/stat
 enum PidStat {
-  kState_ = 2,
-  kUtime_ = 13,
+  kPid_ = 0,
+  kComm_,
+  kState_,
+  kPPid_,
+  kPGrp_,
+  kSession_,
+  kTTY_,
+  kTPGid_,
+  kFlags_,
+  kMinFlt_,
+  kCMinFlt_,
+  kMajFlt_,
+  kCMajFlt_,
+  kUtime_,
   kStime_,
   kCUtime_,
   kCStime_,
-  kStartTime_ = 21
+  kPriority_,
+  kNiceValue_,
+  kThreads_,
+  kITReal_,
+  kStartTime_,
 };
 
 // Helpers

@@ -78,6 +78,10 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
     mvwprintw(window, ++row, pid_column,
               (string(window->_maxx - 2, ' ').c_str()));
 
+    if ((unsigned long)i > processes.size() - 1) {
+      continue;
+    }
+
     mvwprintw(window, row, pid_column, to_string(processes[i].Pid()).c_str());
     mvwprintw(
         window, row, user_column,
@@ -113,10 +117,10 @@ void NCursesDisplay::Display(System& system, int n) {
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     box(system_window, 0, 0);
     box(process_window, 0, 0);
-    DisplaySystem(system, system_window);
     DisplayProcesses(system.Processes(), process_window, n);
-    wrefresh(system_window);
+    DisplaySystem(system, system_window);
     wrefresh(process_window);
+    wrefresh(system_window);
     refresh();
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }

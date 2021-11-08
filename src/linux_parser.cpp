@@ -47,7 +47,7 @@ vector<string> LinuxParser::GetValuesFromLine(const string& line) {
   vector<string> values;
   std::istringstream linestream(line);
   while (linestream >> value) {
-    values.emplace_back(value);
+    values.push_back(value);
   }
   return values;
 }
@@ -243,18 +243,16 @@ string LinuxParser::User(int pid) {
   std::ifstream filestream(kPasswordPath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
-      int count = 0;
-      size_t pos = 0;
-      while (count < User::kUid_) {
-        pos = line.find(":", pos);
-        if (pos == string::npos) {
-          return string();
-        }
-        pos++;
-        count++;
+      std::istringstream linestream(line);
+      string value;
+      vector<string> values;
+      while (values.size() < User::kUid_ + 1 &&
+             std::getline(linestream, value, ':')) {
+        values.push_back(value);
       }
-      if (line.substr(pos, line.find(":", pos) - pos).compare(uid) == 0) {
-        return line.substr(0, line.find(":"));
+      if (values.size() > User::kUid_ &&
+          values.at(User::kUid_).compare(uid) == 0) {
+        return values.at(User::kUserName_);
       }
     }
   }

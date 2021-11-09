@@ -78,7 +78,7 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
     mvwprintw(window, ++row, pid_column,
               (string(window->_maxx - 2, ' ').c_str()));
 
-    if ((unsigned long)i > processes.size() - 1) {
+    if ((size_t)i > processes.size() - 1) {
       continue;
     }
 
@@ -100,24 +100,29 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   }
 }
 
-void NCursesDisplay::Display(System& system, int n) {
-  initscr();      // start ncurses
-  noecho();       // do not print input values
-  cbreak();       // terminate ncurses on ctrl + c
-  start_color();  // enable color
-  curs_set(0);    // hide cursor
+void NCursesDisplay::Display(System& system) {
+  initscr();              // start ncurses
+  noecho();               // do not print input values
+  cbreak();               // terminate ncurses on ctrl + c
+  start_color();          // enable color
+  curs_set(0);            // hide cursor
+  nodelay(stdscr, TRUE);  // make getch() non-blocking
 
-  int x_max{getmaxx(stdscr)};
+  int x_max, y_max;
+  getmaxyx(stdscr, y_max, x_max);
   WINDOW* system_window = newwin(9, x_max - 1, 0, 0);
   WINDOW* process_window =
-      newwin(3 + n, x_max - 1, system_window->_maxy + 1, 0);
+      newwin(y_max - 9, x_max - 1, system_window->_maxy + 1, 0);
+
+  int process_rows = y_max - system_window->_maxy - 4;
 
   while (1) {
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    CheckEvents(system, system_window, process_window, process_rows);
     box(system_window, 0, 0);
     box(process_window, 0, 0);
-    DisplayProcesses(system.Processes(), process_window, n);
+    DisplayProcesses(system.Processes(), process_window, process_rows);
     DisplaySystem(system, system_window);
     wrefresh(process_window);
     wrefresh(system_window);
@@ -125,4 +130,85 @@ void NCursesDisplay::Display(System& system, int n) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   endwin();
+}
+
+void NCursesDisplay::Resize(WINDOW* system_w, WINDOW* process_w, int& rows) {
+  int new_x, new_y;
+  getmaxyx(stdscr, new_y, new_x);
+  wresize(system_w, 9, new_x - 1);
+  wresize(process_w, new_y - 9, new_x - 1);
+  rows = new_y - system_w->_maxy - 4;
+  wclear(stdscr);
+  wclear(system_w);
+  wclear(process_w);
+}
+
+/*
+ * taken from:
+ * https://stackoverflow.com/questions/4025891/create-a-function-to-check-for-key-press-in-unix-using-ncurses
+ */
+int NCursesDisplay::Keypress(void) {
+  int ch = getch();
+
+  if (ch != ERR) {
+    ungetch(ch);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void NCursesDisplay::CheckEvents(System& system, WINDOW* system_w,
+                                 WINDOW* process_w, int& process_rows) {
+  if (Keypress()) {
+    switch (getch()) {
+      case KEY_RESIZE:
+        Resize(system_w, process_w, process_rows);
+        break;
+      case 'q':
+      case 'Q':
+        // Quit program
+        endwin();
+        exit(0);
+        break;
+      case 'c':
+      case 'C':
+        // sort by max CPU
+        system.SetSort(System::Sort::kMaxCpu_);
+        break;
+      case 'r':
+      case 'R':
+        // sort by max Ram
+        system.SetSort(System::Sort::kMaxRam_);
+        break;
+      case 'p':
+      case 'P':
+        // sort by max Pid
+        system.SetSort(System::Sort::kMaxPid_);
+        break;
+      case 's':
+      case 'S':
+        // sort by max State
+        system.SetSort(System::Sort::kMaxState_);
+        break;
+      case '-': {
+        // descending sort
+        int sort = system.GetSort();
+        if (sort % 2 != 0) {
+          system.SetSort(sort - 1);
+        }
+        break;
+      }
+      case '=': {
+        // ascending sort
+        int sort = system.GetSort();
+        if (sort % 2 == 0) {
+          system.SetSort(sort + 1);
+        }
+        break;
+      }
+      default:;
+    }
+    flushinp();
+  }
 }

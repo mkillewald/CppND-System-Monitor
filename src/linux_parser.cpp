@@ -135,8 +135,8 @@ vector<unsigned int> LinuxParser::Pids() {
 }
 
 // This won't compile in Udacity's workspace VM, as it does not appear to be
-// using C++17 even though CMakeLists.txt contains: set_property(TARGET monitor
-// PROPERTY CXX_STANDARD 17)
+// using C++17 even though CMakeLists.txt contains:
+// set_property(TARGET monitor PROPERTY CXX_STANDARD 17)
 
 /*
 vector<unsigned int> LinuxParser::Pids() {

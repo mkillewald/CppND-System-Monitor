@@ -180,13 +180,13 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
             ("Total Processes: " + to_string(system.TotalProcesses())).c_str());
   mvwprintw(
       window, ++row, 2,
-      ("Running Processes: " + to_string(system.RunningProcesses())).c_str());
-  mvwprintw(
-      window, row, 24,
-      ("Alive Processes: " + to_string(system.Processes().size())).c_str());
+      ("Running Processes: " + to_string(system.RunningProcesses()) + "   ")
+          .c_str());
+  mvwprintw(window, row, 25,
+            ("Alive Processes: " + to_string(system.Processes().size()) + "   ")
+                .c_str());
   mvwprintw(window, ++row, 2,
             ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
-  // wrefresh(window);
 }
 
 void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {

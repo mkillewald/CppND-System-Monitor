@@ -89,20 +89,21 @@ std::string GetValueFromLine(const std::string& line, const int index);
 void FixFilenameInParens(std::string& line);
 
 // System
+std::string Kernel();
+std::string OperatingSystem();
+std::vector<int> Pids();
 float MemoryUtilization();
 long UpTime();
-std::vector<int> Pids();
-int TotalProcesses();
-int RunningProcesses();
-std::string OperatingSystem();
-std::string Kernel();
-std::vector<std::string> CpuUtilization();
 long Jiffies();
 long ActiveJiffies();
 long IdleJiffies();
+int TotalProcesses();
+int RunningProcesses();
+std::vector<std::string> CpuUtilization();
 
 // Processes
 std::string Command(int pid);
+std::string Filename(int pid);
 std::string Ram(int pid);
 std::string Uid(int pid);
 std::string User(int pid);

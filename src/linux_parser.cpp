@@ -22,9 +22,9 @@ using std::vector;
  */
 string LinuxParser::GetLineFromFile(const string& path,
                                     const string& key = "") {
-  string line;
   std::ifstream filestream(path);
   if (filestream.is_open()) {
+    string line;
     if (key.empty()) {
       std::getline(filestream, line);
       return line;
@@ -47,7 +47,7 @@ vector<string> LinuxParser::GetValuesFromLine(const string& line) {
   vector<string> values;
   std::istringstream linestream(line);
   while (linestream >> value) {
-    values.push_back(value);
+    values.emplace_back(value);
   }
   return values;
 }
@@ -73,9 +73,9 @@ string LinuxParser::GetValueFromLine(const string& line, const int index = 0) {
 }
 
 /*
- * Sometimes the filename aka "comm" field in /proc/pid/stat contains spaces.
- * This will replace those spaces with an underscore to allow for correct
- * tokenization of the line
+ * Sometimes the filename aka "comm" field in /proc/pid/stat contains spaces
+ * within the parenthesis. This will replace those spaces with an underscore to
+ * allow for correct tokenization of the line
  */
 void LinuxParser::FixFilenameInParens(string& line) {
   size_t l_paren = line.find('(');
@@ -84,6 +84,11 @@ void LinuxParser::FixFilenameInParens(string& line) {
   }
   size_t r_paren = line.find(')', l_paren + 1);
   std::replace(line.begin() + l_paren, line.begin() + r_paren, ' ', '_');
+}
+
+string LinuxParser::Kernel() {
+  string line = GetLineFromFile(kProcDirectory + kVersionFilename);
+  return GetValueFromLine(line, Version::kKernel_);
 }
 
 string LinuxParser::OperatingSystem() {
@@ -103,12 +108,7 @@ string LinuxParser::OperatingSystem() {
       }
     }
   }
-  return value;
-}
-
-string LinuxParser::Kernel() {
-  string line = GetLineFromFile(kProcDirectory + kVersionFilename);
-  return GetValueFromLine(line, Version::kKernel_);
+  return string();
 }
 
 // TODO: BONUS: Update this to use std::filesystem
@@ -123,7 +123,7 @@ vector<int> LinuxParser::Pids() {
       string filename(file->d_name);
       if (std::all_of(filename.begin(), filename.end(), isdigit)) {
         int pid = stoi(filename);
-        pids.push_back(pid);
+        pids.emplace_back(pid);
       }
     }
   }
@@ -133,7 +133,6 @@ vector<int> LinuxParser::Pids() {
 
 float LinuxParser::MemoryUtilization() {
   string key, value, line;
-  vector<string> values;
   long total, available;
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
   if (filestream.is_open()) {
@@ -141,11 +140,13 @@ float LinuxParser::MemoryUtilization() {
       std::getline(filestream, line);
       std::istringstream linestream(line);
       linestream >> key >> value;
-      values.push_back(value);
+      if (i == 0) {
+        total = stol(value);
+      } else if (i == 2) {
+        available = stol(value);
+      }
     }
-    if (values.size() > Meminfo::kAvail_) {
-      total = stol(values.at(Meminfo::kTotal_));
-      available = stol(values.at(Meminfo::kAvail_));
+    if (total > 0) {
       return (float)(total - available) / (float)total;
     }
   }
@@ -198,11 +199,6 @@ long LinuxParser::IdleJiffies() {
   return idle;
 }
 
-vector<string> LinuxParser::CpuUtilization() {
-  string line = GetLineFromFile(kProcDirectory + kStatFilename, kCpu);
-  return GetValuesFromLine(line);
-}
-
 int LinuxParser::TotalProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcesses);
   string value = GetValueFromLine(line, 1);
@@ -221,14 +217,30 @@ int LinuxParser::RunningProcesses() {
   return stoi(value);
 }
 
+vector<string> LinuxParser::CpuUtilization() {
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, kCpu);
+  return GetValuesFromLine(line);
+}
+
 string LinuxParser::Command(int pid) {
   return GetLineFromFile(kProcDirectory + to_string(pid) + kCmdlineFilename);
+}
+
+string LinuxParser::Filename(int pid) {
+  string line =
+      GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
+  size_t l_paren = line.find('(');
+  size_t r_paren = line.find(')', l_paren + 1);
+  return line.substr(l_paren, r_paren - l_paren + 1);
 }
 
 string LinuxParser::Ram(int pid) {
   string line = GetLineFromFile(
       kProcDirectory + to_string(pid) + kStatusFilename, kVmSize);
-  return GetValueFromLine(line, 1);
+  if (line.empty()) {
+    return "0.00000";
+  }
+  return to_string(std::stof(GetValueFromLine(line, 1)) / 1000.0);
 }
 
 string LinuxParser::Uid(int pid) {
@@ -240,6 +252,9 @@ string LinuxParser::Uid(int pid) {
 string LinuxParser::User(int pid) {
   string line;
   string uid = Uid(pid);
+  if (uid.empty()) {
+    return string();
+  }
   std::ifstream filestream(kPasswordPath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
@@ -248,7 +263,7 @@ string LinuxParser::User(int pid) {
       vector<string> values;
       while (values.size() < User::kUid_ + 1 &&
              std::getline(linestream, value, ':')) {
-        values.push_back(value);
+        values.emplace_back(value);
       }
       if (values.size() > User::kUid_ &&
           values.at(User::kUid_).compare(uid) == 0) {

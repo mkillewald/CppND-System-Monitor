@@ -1,8 +1,8 @@
 #include "linux_parser.h"
 
-#include <dirent.h>
 #include <unistd.h>
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -111,23 +111,20 @@ string LinuxParser::OperatingSystem() {
   return string();
 }
 
-// TODO: BONUS: Update this to use std::filesystem
 vector<unsigned int> LinuxParser::Pids() {
   vector<unsigned int> pids;
-  DIR* directory = opendir(kProcDirectory.c_str());
-  struct dirent* file;
-  while ((file = readdir(directory)) != nullptr) {
+  const std::filesystem::path directory{kProcDirectory.c_str()};
+  for (auto const& file : std::filesystem::directory_iterator{directory}) {
     // Is this a directory?
-    if (file->d_type == DT_DIR) {
+    if (is_directory(file.status())) {
       // Is every character of the name a digit?
-      string filename(file->d_name);
+      string filename(file.path().filename());
       if (std::all_of(filename.begin(), filename.end(), isdigit)) {
         unsigned int pid = stoi(filename);
         pids.emplace_back(pid);
       }
     }
   }
-  closedir(directory);
   return pids;
 }
 

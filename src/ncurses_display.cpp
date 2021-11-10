@@ -181,6 +181,9 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
   mvwprintw(
       window, ++row, 2,
       ("Running Processes: " + to_string(system.RunningProcesses())).c_str());
+  mvwprintw(
+      window, row, 24,
+      ("Alive Processes: " + to_string(system.Processes().size())).c_str());
   mvwprintw(window, ++row, 2,
             ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
   // wrefresh(window);
@@ -274,6 +277,7 @@ void NCursesDisplay::Display(System& system) {
     CheckEvents(system, system_window, process_window, process_rows);
     box(process_window, 0, 0);
     box(system_window, 0, 0);
+    system.UpdateProcesses();
     DisplayProcesses(system, process_window, process_rows);
     DisplaySystem(system, system_window);
     wrefresh(process_window);

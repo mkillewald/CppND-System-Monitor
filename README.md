@@ -4,7 +4,7 @@ This is my work in progress for project 2 of [Udacity's C++ Nanodegree Program](
 The starter code for this project is located at:    
 https://github.com/udacity/CppND-Sysetem-Monitor
 
-![System Monitor](images/monitor.png)
+![System Monitor](images/monitor-800.png)
 
 ## Udacity Linux Workspace
 [Udacity](https://www.udacity.com/) provides a browser-based Linux [Workspace](https://engineering.udacity.com/creating-a-gpu-enhanced-virtual-desktop-for-udacity-497bdd91a505) for students. 

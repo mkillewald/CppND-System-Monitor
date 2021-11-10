@@ -91,25 +91,25 @@ void FixFilenameInParens(std::string& line);
 // System
 std::string Kernel();
 std::string OperatingSystem();
-std::vector<int> Pids();
+std::vector<unsigned int> Pids();
 float MemoryUtilization();
-long UpTime();
-long Jiffies();
-long ActiveJiffies();
-long IdleJiffies();
-int TotalProcesses();
-int RunningProcesses();
+unsigned long UpTime();
+unsigned long Jiffies();
+unsigned long ActiveJiffies();
+unsigned long IdleJiffies();
+unsigned long TotalProcesses();
+unsigned long RunningProcesses();
 std::vector<std::string> CpuUtilization();
 
 // Processes
-std::string Command(int pid);
-std::string Filename(int pid);
-std::string Ram(int pid);
-std::string Uid(int pid);
-std::string User(int pid);
-long int UpTime(int pid);
-long ActiveJiffies(int pid);
-std::string State(int pid);
+std::string Command(unsigned int pid);
+std::string Filename(unsigned int pid);
+std::string Ram(unsigned int pid);
+std::string Uid(unsigned int pid);
+std::string User(unsigned int pid);
+unsigned long UpTime(unsigned int pid);
+unsigned long ActiveJiffies(unsigned int pid);
+std::string State(unsigned int pid);
 };  // namespace LinuxParser
 
 #endif

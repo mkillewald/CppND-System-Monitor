@@ -14,18 +14,20 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Process::Process(int pid, string user, string command)
+Process::Process(unsigned int pid, string user, string command)
     : pid_(pid), user_(user), command_(command) {
   active_ = LinuxParser::ActiveJiffies(pid);
   uptime_ = LinuxParser::UpTime(pid);
   killed_ = false;
 };
 
-int Process::Pid() const { return pid_; }
+unsigned int Process::Pid() const { return pid_; }
 string Process::User() const { return user_; }
 string Process::Command() const { return command_; }
-long Process::Active() const { return LinuxParser::ActiveJiffies(Pid()); }
-long Process::UpTime() const { return LinuxParser::UpTime(Pid()); }
+unsigned long Process::Active() const {
+  return LinuxParser::ActiveJiffies(Pid());
+}
+unsigned long Process::UpTime() const { return LinuxParser::UpTime(Pid()); }
 string Process::Ram() const { return LinuxParser::Ram(Pid()); }
 
 string Process::State() const {
@@ -43,9 +45,9 @@ string Process::State() const {
 bool Process::isKilled() const { return killed_; }
 
 float Process::CpuUtilization() const {
-  long active_now = LinuxParser::ActiveJiffies(Pid());
-  long uptime_now = UpTime();
-  long uptime_d = uptime_now - uptime_;
+  unsigned long active_now = LinuxParser::ActiveJiffies(Pid());
+  unsigned long uptime_now = UpTime();
+  unsigned long uptime_d = uptime_now - uptime_;
   if (uptime_d > 0) {
     float active_d =
         (float)(active_now - active_) / (float)sysconf(_SC_CLK_TCK);
@@ -60,4 +62,5 @@ bool Process::operator<(Process const& a) const {
   return CpuUtilization() < a.CpuUtilization();
 }
 
-bool Process::operator==(int const& a) const { return Pid() == a; }
+bool Process::operator==(unsigned int const& a) const { return Pid() == a; }
+bool Process::operator==(Process const& a) const { return Pid() == a.Pid(); }

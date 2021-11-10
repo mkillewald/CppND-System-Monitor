@@ -112,8 +112,8 @@ string LinuxParser::OperatingSystem() {
 }
 
 // TODO: BONUS: Update this to use std::filesystem
-vector<int> LinuxParser::Pids() {
-  vector<int> pids;
+vector<unsigned int> LinuxParser::Pids() {
+  vector<unsigned int> pids;
   DIR* directory = opendir(kProcDirectory.c_str());
   struct dirent* file;
   while ((file = readdir(directory)) != nullptr) {
@@ -122,7 +122,7 @@ vector<int> LinuxParser::Pids() {
       // Is every character of the name a digit?
       string filename(file->d_name);
       if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = stoi(filename);
+        unsigned int pid = stoi(filename);
         pids.emplace_back(pid);
       }
     }
@@ -153,7 +153,7 @@ float LinuxParser::MemoryUtilization() {
   return 0.0;
 }
 
-long LinuxParser::UpTime() {
+unsigned long LinuxParser::UpTime() {
   string uptime;
   string line = GetLineFromFile(kProcDirectory + kUptimeFilename);
   std::istringstream linestream(line);
@@ -161,60 +161,60 @@ long LinuxParser::UpTime() {
   if (uptime.empty()) {
     return 0;
   }
-  return stol(uptime);
+  return stoul(uptime);
 }
 
-long LinuxParser::Jiffies() {
-  long total = 0;
+unsigned long LinuxParser::Jiffies() {
+  unsigned long total = 0;
   vector<string> values = CpuUtilization();
   if (values.size() > CPUStates::kSteal_) {
     for (int i = CPUStates::kUser_; i <= CPUStates::kSteal_; i++) {
-      total += stol(values.at(i));
+      total += stoul(values.at(i));
     }
   }
   return total;
 }
 
-long LinuxParser::ActiveJiffies() {
-  long active = 0;
+unsigned long LinuxParser::ActiveJiffies() {
+  unsigned long active = 0;
   vector<string> values = CpuUtilization();
   if (values.size() > CPUStates::kSteal_) {
-    active = stol(values.at(CPUStates::kUser_));
-    active += stol(values.at(CPUStates::kNice_));
-    active += stol(values.at(CPUStates::kSystem_));
-    active += stol(values.at(CPUStates::kIRQ_));
-    active += stol(values.at(CPUStates::kSoftIRQ_));
-    active += stol(values.at(CPUStates::kSteal_));
+    active = stoul(values.at(CPUStates::kUser_));
+    active += stoul(values.at(CPUStates::kNice_));
+    active += stoul(values.at(CPUStates::kSystem_));
+    active += stoul(values.at(CPUStates::kIRQ_));
+    active += stoul(values.at(CPUStates::kSoftIRQ_));
+    active += stoul(values.at(CPUStates::kSteal_));
   }
   return active;
 }
 
-long LinuxParser::IdleJiffies() {
-  long idle = 0;
+unsigned long LinuxParser::IdleJiffies() {
+  unsigned long idle = 0;
   vector<string> values = CpuUtilization();
   if (values.size() > CPUStates::kIOwait_) {
-    idle = stol(values.at(CPUStates::kIdle_));
-    idle += stol(values.at(CPUStates::kIOwait_));
+    idle = stoul(values.at(CPUStates::kIdle_));
+    idle += stoul(values.at(CPUStates::kIOwait_));
   }
   return idle;
 }
 
-int LinuxParser::TotalProcesses() {
+unsigned long LinuxParser::TotalProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcesses);
   string value = GetValueFromLine(line, 1);
   if (value.empty()) {
     return 0;
   }
-  return stoi(value);
+  return stoul(value);
 }
 
-int LinuxParser::RunningProcesses() {
+unsigned long LinuxParser::RunningProcesses() {
   string line = GetLineFromFile(kProcDirectory + kStatFilename, kProcsRunning);
   string value = GetValueFromLine(line, 1);
   if (value.empty()) {
     return 0;
   }
-  return stoi(value);
+  return stoul(value);
 }
 
 vector<string> LinuxParser::CpuUtilization() {
@@ -222,19 +222,22 @@ vector<string> LinuxParser::CpuUtilization() {
   return GetValuesFromLine(line);
 }
 
-string LinuxParser::Command(int pid) {
+string LinuxParser::Command(unsigned int pid) {
   return GetLineFromFile(kProcDirectory + to_string(pid) + kCmdlineFilename);
 }
 
-string LinuxParser::Filename(int pid) {
+string LinuxParser::Filename(unsigned int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   size_t l_paren = line.find('(');
   size_t r_paren = line.find(')', l_paren + 1);
-  return line.substr(l_paren, r_paren - l_paren + 1);
+  if (l_paren > 0 && r_paren > l_paren) {
+    return line.substr(l_paren, r_paren - l_paren + 1);
+  }
+  return string();
 }
 
-string LinuxParser::Ram(int pid) {
+string LinuxParser::Ram(unsigned int pid) {
   string line = GetLineFromFile(
       kProcDirectory + to_string(pid) + kStatusFilename, kVmSize);
   if (line.empty()) {
@@ -243,13 +246,13 @@ string LinuxParser::Ram(int pid) {
   return to_string(std::stof(GetValueFromLine(line, 1)) / 1000.0);
 }
 
-string LinuxParser::Uid(int pid) {
+string LinuxParser::Uid(unsigned int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatusFilename, kUid);
   return GetValueFromLine(line, 1);
 }
 
-string LinuxParser::User(int pid) {
+string LinuxParser::User(unsigned int pid) {
   string line;
   string uid = Uid(pid);
   if (uid.empty()) {
@@ -274,7 +277,7 @@ string LinuxParser::User(int pid) {
   return string();
 }
 
-long LinuxParser::UpTime(int pid) {
+unsigned long LinuxParser::UpTime(unsigned int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   FixFilenameInParens(line);
@@ -282,12 +285,12 @@ long LinuxParser::UpTime(int pid) {
   if (start_time_str.empty()) {
     return 0;
   }
-  long start_time = stol(start_time_str);
+  unsigned long start_time = stoul(start_time_str);
   return UpTime() - (start_time / sysconf(_SC_CLK_TCK));
 }
 
-long LinuxParser::ActiveJiffies(int pid) {
-  long active = 0;
+unsigned long LinuxParser::ActiveJiffies(unsigned int pid) {
+  unsigned long active = 0;
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   FixFilenameInParens(line);
@@ -295,13 +298,13 @@ long LinuxParser::ActiveJiffies(int pid) {
 
   if (values.size() > PidStat::kStime_) {
     for (int i = PidStat::kUtime_; i <= PidStat::kStime_; i++) {
-      active += stol(values.at(i));
+      active += stoul(values.at(i));
     }
   }
   return active;
 }
 
-string LinuxParser::State(int pid) {
+string LinuxParser::State(unsigned int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
   FixFilenameInParens(line);

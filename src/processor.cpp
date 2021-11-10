@@ -9,10 +9,10 @@ using std::string;
 using std::vector;
 
 float Processor::Utilization() {
-  long total_now = LinuxParser::Jiffies();
-  long idle_now = LinuxParser::IdleJiffies();
-  long total_d = total_now - total_;
-  long idle_d = idle_now - idle_;
+  unsigned long total_now = LinuxParser::Jiffies();
+  unsigned long idle_now = LinuxParser::IdleJiffies();
+  unsigned long total_d = total_now - total_;
+  unsigned long idle_d = idle_now - idle_;
   if (total_d > 0) {
     total_ = total_now;
     idle_ = idle_now;

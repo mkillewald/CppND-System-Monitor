@@ -57,6 +57,10 @@ void System::AddProcesses() {
       string command = LinuxParser::Command(pid);
       string user = LinuxParser::User(pid);
       if (command.empty()) {
+        // On my Ubuntu 21.10 VM at home, I was getting many processes with
+        // blank command lines, so this is my solution for not displaying a
+        // bunch of blank lines. It turns out this does not seem to be an issue
+        // on the Udacity Ubuntu 16.04.6 VM workspace.
         command = LinuxParser::Filename(pid);
       }
       processes_.emplace_back(Process(pid, user, command));
@@ -65,10 +69,10 @@ void System::AddProcesses() {
 }
 
 void System::RemoveProcesses() {
-  // getting crashes after running for >1hour~ related to this function and
+  // Getting crashes after running for >1hour~ related to this function and
   // accessing out of range memory. Each time the pid of the Process it was
-  // sorting was very large or sometimes negative. Added checks for
-  // pid > TotalProcesses() to help resolve.
+  // stopping on was very large . Added checks for pid > TotalProcesses() to
+  // help resolve.
   std::sort(processes_.begin(), processes_.end(),
             [total = TotalProcesses()](Process& a, Process& b) {
               if (a.Pid() > total || b.Pid() > total) {

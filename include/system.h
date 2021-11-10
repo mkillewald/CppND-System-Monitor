@@ -15,14 +15,15 @@ class System {
   Processor& Cpu();
   std::string Kernel() const;
   std::string OperatingSystem() const;
-  int RunningProcesses() const;
-  int TotalProcesses() const;
-  long UpTime() const;
+  unsigned long RunningProcesses() const;
+  unsigned long TotalProcesses() const;
+  unsigned long UpTime() const;
   float MemoryUtilization() const;
   Sort_t Sort() const;
   void SetSort(Sort_t s);
   bool Descending() const;
   void SetDescending(bool d);
+  void UpdateProcesses();
 
  private:
   Processor cpu_ = {};

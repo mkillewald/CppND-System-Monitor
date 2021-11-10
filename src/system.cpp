@@ -17,34 +17,44 @@ using std::size_t;
 using std::string;
 using std::vector;
 
+vector<Process>& System::Processes() {
+  RemoveProcesses();
+  AddProcesses();
+  SortProcesses();
+  return processes_;
+}
+
 Processor& System::Cpu() { return cpu_; }
-std::string System::Kernel() const { return LinuxParser::Kernel(); }
+string System::Kernel() const { return LinuxParser::Kernel(); }
+string System::OperatingSystem() const {
+  return LinuxParser::OperatingSystem();
+}
 int System::RunningProcesses() const { return LinuxParser::RunningProcesses(); }
 int System::TotalProcesses() const { return LinuxParser::TotalProcesses(); }
 long int System::UpTime() const { return LinuxParser::UpTime(); }
-
 float System::MemoryUtilization() const {
   return LinuxParser::MemoryUtilization();
 }
-
-std::string System::OperatingSystem() const {
-  return LinuxParser::OperatingSystem();
-}
-
-int System::GetSort() const { return sort_; }
-void System::SetSort(int s) { sort_ = s; }
+System::Sort_t System::Sort() const { return sort_; }
+void System::SetSort(Sort_t s) { sort_ = s; }
+bool System::Descending() const { return descending_; }
+void System::SetDescending(bool d) { descending_ = d; }
 
 /*
  * Add new processes to processes_ vector
  */
 void System::AddProcesses() {
-  for (int& pid : LinuxParser::Pids()) {
+  for (int pid : LinuxParser::Pids()) {
     if (std::find(processes_.begin(), processes_.end(), pid) ==
         processes_.end()) {
       string command = LinuxParser::Command(pid);
-      if (!command.empty()) {
-        processes_.emplace_back(Process(pid, command));
+      string user = LinuxParser::User(pid);
+      if (command.empty()) {
+        command = LinuxParser::Filename(pid);
       }
+      // if (!command.empty() && !user.empty()) {
+      processes_.emplace_back(Process(pid, user, command));
+      // }
     }
   }
 }
@@ -53,68 +63,62 @@ void System::AddProcesses() {
  * Remove killed processes from the processes_ vector
  */
 void System::RemoveProcesses() {
-  // Sort by State(). Killed processes will have an empty string because it
-  // could not be read from file.
   std::sort(processes_.begin(), processes_.end(),
-            [](Process& a, Process& b) { return a.State() > b.State(); });
+            [](Process& a, Process& b) { return a.State() < b.State(); });
 
-  // Verify state of process is an empty string, and pop it off
-  while (processes_.size() > 0 && processes_.back().State().empty()) {
+  // Verify if process has been killed, and pop it off
+  while (processes_.size() > 0 && processes_.back().isKilled()) {
     processes_.pop_back();
   }
 }
 
 void System::SortProcesses() {
   std::function<bool(Process & a, Process & b)> sort_function;
-  switch (sort_) {
+  switch (Sort()) {
+    case kPid_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? a.Pid() > b.Pid() : a.Pid() < b.Pid();
+      };
+      break;
+    }
+    case kUser_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? a.User() > b.User() : a.User() < b.User();
+      };
+      break;
+    }
+    case kState_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? a.State() > b.State() : a.State() < b.State();
+      };
+      break;
+    }
     default:
-    case Sort::kMaxCpu_: {
-      sort_function = [](Process& a, Process& b) { return b < a; };
-      break;
-    }
-    case Sort::kMinCpu_: {
-      sort_function = [](Process& a, Process& b) { return a < b; };
-      break;
-    }
-    case Sort::kMaxRam_: {
-      sort_function = [](Process& a, Process& b) {
-        return stof(a.Ram()) > stof(b.Ram());
+    case kCpu_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? b < a : a < b;
       };
       break;
     }
-    case Sort::kMinRam_: {
-      sort_function = [](Process& a, Process& b) {
-        return stof(a.Ram()) < stof(b.Ram());
+    case kRam_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? stof(a.Ram()) > stof(b.Ram())
+                 : stof(a.Ram()) < stof(b.Ram());
       };
       break;
     }
-    case Sort::kMaxPid_: {
-      sort_function = [](Process& a, Process& b) { return a.Pid() > b.Pid(); };
-      break;
-    }
-    case Sort::kMinPid_: {
-      sort_function = [](Process& a, Process& b) { return a.Pid() < b.Pid(); };
-      break;
-    }
-    case Sort::kMaxState_: {
-      sort_function = [](Process& a, Process& b) {
-        return a.State() > b.State();
+    case kUpTime_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? a.UpTime() > b.UpTime() : a.UpTime() < b.UpTime();
       };
       break;
     }
-    case Sort::kMinState_: {
-      sort_function = [](Process& a, Process& b) {
-        return a.State() < b.State();
+    case kCommand_: {
+      sort_function = [d = Descending()](Process& a, Process& b) {
+        return d ? a.Command() > b.Command() : a.Command() < b.Command();
       };
       break;
     }
   }
   std::sort(processes_.begin(), processes_.end(), sort_function);
-}
-
-vector<Process>& System::Processes() {
-  RemoveProcesses();
-  AddProcesses();
-  SortProcesses();
-  return processes_;
 }

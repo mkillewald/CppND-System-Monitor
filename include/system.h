@@ -9,32 +9,26 @@
 
 class System {
  public:
-  enum Sort {
-    kMinCpu_ = 0,
-    kMaxCpu_,
-    kMinRam_,
-    kMaxRam_,
-    kMinPid_,
-    kMaxPid_,
-    kMinState_,
-    kMaxState_
-  };
+  enum Sort_t { kPid_ = 0, kUser_, kState_, kCpu_, kRam_, kUpTime_, kCommand_ };
 
-  Processor& Cpu();
   std::vector<Process>& Processes();
-  float MemoryUtilization() const;
-  long UpTime() const;
-  int TotalProcesses() const;
-  int RunningProcesses() const;
+  Processor& Cpu();
   std::string Kernel() const;
   std::string OperatingSystem() const;
-  int GetSort() const;
-  void SetSort(int s);
+  int RunningProcesses() const;
+  int TotalProcesses() const;
+  long UpTime() const;
+  float MemoryUtilization() const;
+  Sort_t Sort() const;
+  void SetSort(Sort_t s);
+  bool Descending() const;
+  void SetDescending(bool d);
 
  private:
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
-  int sort_ = kMaxCpu_;
+  Sort_t sort_ = kCpu_;
+  bool descending_ = true;
 
   void AddProcesses();
   void RemoveProcesses();

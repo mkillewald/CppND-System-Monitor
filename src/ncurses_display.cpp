@@ -49,8 +49,8 @@ void NCursesDisplay::AddColorChar(WINDOW* window, int color, chtype c) {
 void NCursesDisplay::Resize(WINDOW* system_w, WINDOW* process_w, int& rows) {
   int new_x, new_y;
   getmaxyx(stdscr, new_y, new_x);
-  wresize(system_w, SYSTEM_WINDOW_HEIGHT, new_x - 1);
-  wresize(process_w, new_y - system_w->_maxy - 1, new_x - 1);
+  wresize(system_w, SYSTEM_WINDOW_HEIGHT, new_x);
+  wresize(process_w, new_y - system_w->_maxy - 1, new_x);
   rows = new_y - system_w->_maxy - 4;
   wclear(stdscr);
   wclear(system_w);
@@ -267,8 +267,8 @@ void NCursesDisplay::Display(System& system) {
 
   int x_max, y_max;
   getmaxyx(stdscr, y_max, x_max);
-  WINDOW* system_window = newwin(SYSTEM_WINDOW_HEIGHT, x_max - 1, 0, 0);
-  WINDOW* process_window = newwin(y_max - system_window->_maxy - 1, x_max - 1,
+  WINDOW* system_window = newwin(SYSTEM_WINDOW_HEIGHT, x_max, 0, 0);
+  WINDOW* process_window = newwin(y_max - system_window->_maxy - 1, x_max,
                                   system_window->_maxy + 1, 0);
 
   int process_rows = y_max - system_window->_maxy - 4;

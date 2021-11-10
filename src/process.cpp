@@ -18,44 +18,58 @@ Process::Process(unsigned int pid, string user, string command)
     : pid_(pid), user_(user), command_(command) {
   active_ = LinuxParser::ActiveJiffies(pid);
   uptime_ = LinuxParser::UpTime(pid);
+  cpu_util_ = 0;
   killed_ = false;
 };
 
 unsigned int Process::Pid() const { return pid_; }
 string Process::User() const { return user_; }
 string Process::Command() const { return command_; }
-unsigned long Process::Active() const {
-  return LinuxParser::ActiveJiffies(Pid());
-}
-unsigned long Process::UpTime() const { return LinuxParser::UpTime(Pid()); }
-string Process::Ram() const { return LinuxParser::Ram(Pid()); }
+unsigned long Process::Active() const { return active_; }
+unsigned long Process::UpTime() const { return uptime_; }
+float Process::CpuUtilization() const { return cpu_util_; }
+string Process::Ram() const { return ram_; }
+string Process::State() const { return state_; }
+bool Process::isKilled() const { return killed_; }
 
-string Process::State() const {
+void Process::SetActive(unsigned long active) { active_ = active; }
+void Process::SetUpTime(unsigned long uptime) { uptime_ = uptime; }
+void Process::SetCpuUtilization(float cpu_util) { cpu_util_ = cpu_util; }
+void Process::SetRam(string ram) { ram_ = ram; }
+void Process::SetState(string state) { state_ = state; }
+void Process::SetKilled(bool k) { killed_ = k; }
+
+void Process::UpdateCpuUtilization() {
+  unsigned long active_now = LinuxParser::ActiveJiffies(Pid());
+  unsigned long uptime_now = LinuxParser::UpTime(Pid());
+  unsigned long uptime_d = uptime_now - uptime_;
+  if (uptime_d > 0) {
+    float active_d =
+        (float)(active_now - active_) / (float)sysconf(_SC_CLK_TCK);
+    SetActive(active_now);
+    SetUpTime(uptime_now);
+    SetCpuUtilization(active_d / (float)uptime_d);
+  }
+}
+
+void Process::UpdateRam() { SetRam(LinuxParser::Ram(Pid())); }
+
+void Process::UpdateState() {
   string state = LinuxParser::State(Pid());
   if (state.empty()) {
     // process state was not read from file, so this is a good indication that
     // this proccess has been killed. Set killed_ to true and set state to "~"
     // to allow for sorting by state to remove killed processes;
-    killed_ = true;
-    return "~";
+    SetKilled(true);
+    state = "~";
   }
-  return state;
+  SetState(state);
 }
 
-bool Process::isKilled() const { return killed_; }
-
-float Process::CpuUtilization() const {
-  unsigned long active_now = LinuxParser::ActiveJiffies(Pid());
-  unsigned long uptime_now = UpTime();
-  unsigned long uptime_d = uptime_now - uptime_;
-  if (uptime_d > 0) {
-    float active_d =
-        (float)(active_now - active_) / (float)sysconf(_SC_CLK_TCK);
-    active_ = active_now;
-    uptime_ = uptime_now;
-    cpu_util_ = active_d / (float)uptime_d;
-  }
-  return cpu_util_;
+void Process::Update() {
+  UpdateCpuUtilization();
+  UpdateRam();
+  UpdateState();
 }
 
 bool Process::operator<(Process const& a) const {

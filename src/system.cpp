@@ -41,6 +41,11 @@ void System::SetDescending(bool d) { descending_ = d; }
 
 void System::UpdateProcesses() {
   AddProcesses();
+
+  for (auto& process : processes_) {
+    process.Update();
+  }
+
   RemoveProcesses();
   SortProcesses();
 }
@@ -60,6 +65,10 @@ void System::AddProcesses() {
 }
 
 void System::RemoveProcesses() {
+  // getting crashes after running for >1hour~ related to this function and
+  // accessing out of range memory. Each time the pid of the Process it was
+  // sorting was very large or sometimes negative. Added checks for
+  // pid > TotalProcesses() to help resolve.
   std::sort(processes_.begin(), processes_.end(),
             [total = TotalProcesses()](Process& a, Process& b) {
               if (a.Pid() > total || b.Pid() > total) {

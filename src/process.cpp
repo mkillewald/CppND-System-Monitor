@@ -59,7 +59,7 @@ void Process::UpdateState() {
   if (state.empty()) {
     // process state was not read from file, so this is a good indication that
     // this proccess has been killed. Set killed_ to true and set state to "~"
-    // to allow for sorting by state to remove killed processes;
+    // to allow for sorting by state to remove killed processes
     SetKilled(true);
     state = "~";
   }

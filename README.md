@@ -1,5 +1,5 @@
 # CppND-System-Monitor
-This is my work in progress for project 2 of [Udacity's C++ Nanodegree Program](https://www.udacity.com/course/c-plus-plus-nanodegree--nd213).    
+This is my submission for project 2 of [Udacity's C++ Nanodegree Program](https://www.udacity.com/course/c-plus-plus-nanodegree--nd213).    
 
 The starter code for this project is located at:    
 https://github.com/udacity/CppND-Sysetem-Monitor

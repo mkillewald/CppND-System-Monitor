@@ -1,6 +1,5 @@
 #include "linux_parser.h"
 
-#include <dirent.h>
 #include <unistd.h>
 
 #include <experimental/filesystem>
@@ -114,32 +113,6 @@ string LinuxParser::OperatingSystem() {
   return string();
 }
 
-/*
-// BONUS: Update this to use std::filesystem
-vector<unsigned int> LinuxParser::Pids() {
-  vector<unsigned int> pids;
-  DIR* directory = opendir(kProcDirectory.c_str());
-  struct dirent* file;
-  while ((file = readdir(directory)) != nullptr) {
-    // Is this a directory?
-    if (file->d_type == DT_DIR) {
-      // Is every character of the name a digit?
-      string filename(file->d_name);
-      if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        unsigned int pid = stoi(filename);
-        pids.push_back(pid);
-      }
-    }
-  }
-  closedir(directory);
-  return pids;
-}
-*/
-
-// This won't compile in Udacity's workspace VM, as it does not appear to be
-// using C++17 even though CMakeLists.txt contains:
-// set_property(TARGET monitor PROPERTY CXX_STANDARD 17)
-
 vector<unsigned int> LinuxParser::Pids() {
   vector<unsigned int> pids;
   const fs::path directory{kProcDirectory};
@@ -150,7 +123,7 @@ vector<unsigned int> LinuxParser::Pids() {
       string filename(file.path().filename());
       if (std::all_of(filename.begin(), filename.end(), isdigit)) {
         unsigned int pid = stoi(filename);
-        pids.emplace_back(pid);
+        pids.push_back(pid);
       }
     }
   }

@@ -11,6 +11,7 @@ class System {
  public:
   enum Sort_t { kPid_ = 0, kUser_, kState_, kCpu_, kRam_, kUpTime_, kCommand_ };
 
+  System();
   std::vector<Process>& Processes();
   Processor& Cpu();
   std::string Kernel() const;
@@ -27,6 +28,7 @@ class System {
 
  private:
   Processor cpu_ = {};
+  std::vector<Processor> cpus_ = {};
   std::vector<Process> processes_ = {};
   Sort_t sort_ = kCpu_;
   bool descending_ = true;
@@ -34,6 +36,7 @@ class System {
   void AddProcesses();
   void RemoveProcesses();
   void SortProcesses();
+  void InitCpus();
 };
 
 #endif

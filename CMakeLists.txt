@@ -13,3 +13,6 @@ set_property(TARGET monitor PROPERTY CXX_STANDARD 17)
 target_link_libraries(monitor ${CURSES_LIBRARIES})
 # TODO: Run -Werror in CI.
 target_compile_options(monitor PRIVATE -Wall -Wextra)
+
+# added to allow use of std::experimental::filesystem
+target_link_libraries(monitor stdc++fs)

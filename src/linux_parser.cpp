@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include <unistd.h>
 
-// #include <filesystem>
+#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -15,7 +15,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 
 /*
  * Returns a line from a file at given path whose first token matches key.
@@ -114,6 +114,7 @@ string LinuxParser::OperatingSystem() {
   return string();
 }
 
+/*
 // BONUS: Update this to use std::filesystem
 vector<unsigned int> LinuxParser::Pids() {
   vector<unsigned int> pids;
@@ -133,16 +134,16 @@ vector<unsigned int> LinuxParser::Pids() {
   closedir(directory);
   return pids;
 }
+*/
 
 // This won't compile in Udacity's workspace VM, as it does not appear to be
 // using C++17 even though CMakeLists.txt contains:
 // set_property(TARGET monitor PROPERTY CXX_STANDARD 17)
 
-/*
 vector<unsigned int> LinuxParser::Pids() {
   vector<unsigned int> pids;
   const fs::path directory{kProcDirectory};
-  for (auto const& file : fs::directory_iterator{directory}) {
+  for (auto& file : fs::directory_iterator(directory)) {
     // Is this a directory?
     if (fs::is_directory(file.status())) {
       // Is every character of the name a digit?
@@ -155,7 +156,6 @@ vector<unsigned int> LinuxParser::Pids() {
   }
   return pids;
 }
-*/
 
 float LinuxParser::MemoryUtilization() {
   string key, value, line;

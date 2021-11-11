@@ -13,55 +13,6 @@
 using std::string;
 using std::to_string;
 
-void NCursesDisplay::ClearLine(WINDOW* window, int row) {
-  mvwprintw(window, row, 1, (string(window->_maxx - 1, ' ').c_str()));
-}
-
-/*
- * Sets color to entire string and applies bold and underline attributes to a
- * single character at given position. Defaults to first character if position
- * not supplied.
- */
-void NCursesDisplay::BoldUnderlineAndColor(WINDOW* window, int color, int row,
-                                           int col, string str, size_t pos) {
-  wattron(window, COLOR_PAIR(color));
-  if (pos > 0) {
-    mvwprintw(window, row, col, str.substr(0, pos).c_str());
-  }
-  wattron(window, A_BOLD);
-  wattron(window, A_UNDERLINE);
-  mvwprintw(window, row, col + pos, str.substr(pos, 1).c_str());
-  wattroff(window, A_UNDERLINE);
-  wattroff(window, A_BOLD);
-  if (str.size() > pos) {
-    mvwprintw(window, row, col + pos + 1,
-              str.substr(pos + 1, string::npos).c_str());
-  }
-  wattroff(window, COLOR_PAIR(color));
-}
-
-/*
- * Colorizes the input char before adding it to the given window at its current
- * cursor position
- */
-void NCursesDisplay::AddColorChar(WINDOW* window, int color, chtype c) {
-  wattron(window, COLOR_PAIR(color));
-  waddch(window, c);
-  wattroff(window, COLOR_PAIR(color));
-}
-
-void NCursesDisplay::Resize(WINDOW* system_w, WINDOW* process_w, int& rows) {
-  int new_x, new_y;
-  getmaxyx(stdscr, new_y, new_x);
-  int system_window_height = system_w->_maxy + 1;
-  wresize(system_w, system_window_height, new_x);
-  wresize(process_w, new_y - system_w->_maxy - 1, new_x);
-  rows = new_y - system_w->_maxy - 4;
-  wclear(stdscr);
-  wclear(system_w);
-  wclear(process_w);
-}
-
 /*
  * taken from:
  * https://stackoverflow.com/questions/4025891/create-a-function-to-check-for-key-press-in-unix-using-ncurses
@@ -144,6 +95,55 @@ void NCursesDisplay::CheckEvents(System& system, WINDOW* system_w,
     // chars from piling up.
     flushinp();
   }
+}
+
+void NCursesDisplay::ClearLine(WINDOW* window, int row) {
+  mvwprintw(window, row, 1, (string(window->_maxx - 1, ' ').c_str()));
+}
+
+/*
+ * Sets color to entire string and applies bold and underline attributes to a
+ * single character at given position. Defaults to first character if position
+ * not supplied.
+ */
+void NCursesDisplay::BoldUnderlineAndColor(WINDOW* window, int color, int row,
+                                           int col, string str, size_t pos) {
+  wattron(window, COLOR_PAIR(color));
+  if (pos > 0) {
+    mvwprintw(window, row, col, str.substr(0, pos).c_str());
+  }
+  wattron(window, A_BOLD);
+  wattron(window, A_UNDERLINE);
+  mvwprintw(window, row, col + pos, str.substr(pos, 1).c_str());
+  wattroff(window, A_UNDERLINE);
+  wattroff(window, A_BOLD);
+  if (str.size() > pos) {
+    mvwprintw(window, row, col + pos + 1,
+              str.substr(pos + 1, string::npos).c_str());
+  }
+  wattroff(window, COLOR_PAIR(color));
+}
+
+/*
+ * Colorizes the input char before adding it to the given window at its current
+ * cursor position
+ */
+void NCursesDisplay::AddColorChar(WINDOW* window, int color, chtype c) {
+  wattron(window, COLOR_PAIR(color));
+  waddch(window, c);
+  wattroff(window, COLOR_PAIR(color));
+}
+
+void NCursesDisplay::Resize(WINDOW* system_w, WINDOW* process_w, int& rows) {
+  int new_x, new_y;
+  getmaxyx(stdscr, new_y, new_x);
+  int system_window_height = system_w->_maxy + 1;
+  wresize(system_w, system_window_height, new_x);
+  wresize(process_w, new_y - system_w->_maxy - 1, new_x);
+  rows = new_y - system_w->_maxy - 4;
+  wclear(stdscr);
+  wclear(system_w);
+  wclear(process_w);
 }
 
 // 50 bars uniformly displayed from 0 - 100 %

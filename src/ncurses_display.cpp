@@ -176,8 +176,8 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
   std::string os = "OS: " + system.OperatingSystem();
   mvwprintw(window, ++row, 2, os.c_str());
   std::string kernel = "Kernel: " + system.Kernel();
-  mvwprintw(window, row, 8 + os.size(), kernel.c_str());
-  mvwprintw(window, row, 14 + os.size() + kernel.size(),
+  mvwprintw(window, row, 4 + os.size(), kernel.c_str());
+  mvwprintw(window, row, 6 + os.size() + kernel.size(),
             ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
 
   // Aggregate CPU progress bar
@@ -210,10 +210,10 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
   mvwprintw(window, row, 2, total.c_str());
   std::string running =
       "Running Processes: " + to_string(system.RunningProcesses());
-  mvwprintw(window, row, 6 + total.size(), running.c_str());
+  mvwprintw(window, row, 4 + total.size(), running.c_str());
   std::string alive =
       "Alive Processes: " + to_string(system.Processes().size());
-  mvwprintw(window, row, 11 + total.size() + running.size(), alive.c_str());
+  mvwprintw(window, row, 6 + total.size() + running.size(), alive.c_str());
 }
 
 void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {

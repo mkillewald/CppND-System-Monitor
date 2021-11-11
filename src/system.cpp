@@ -71,7 +71,7 @@ void System::AddProcesses() {
       string user = LinuxParser::User(pid);
       if (command.empty()) {
         // On my Ubuntu 21.10 VM at home, I was getting many processes with
-        // blank command lines, so this is my solution for not displaying a
+        // blank command lines. This is my solution for not displaying a
         // bunch of blank lines. It turns out this does not seem to be an
         // issue on the Udacity Ubuntu 16.04.6 VM workspace.
         command = LinuxParser::Filename(pid);

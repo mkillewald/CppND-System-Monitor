@@ -1,11 +1,8 @@
 #include "system.h"
 
-#include <unistd.h>
-
 #include <algorithm>
 #include <cstddef>
 #include <functional>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -13,10 +10,11 @@
 #include "process.h"
 #include "processor.h"
 
-using std::set;
 using std::size_t;
 using std::string;
 using std::vector;
+
+System::System() { InitCpus(); }
 
 vector<Process>& System::Processes() { return processes_; }
 Processor& System::Cpu() { return cpu_; }
@@ -69,17 +67,9 @@ void System::AddProcesses() {
 }
 
 void System::RemoveProcesses() {
-  // Getting crashes after running for >1hour~ related to this function and
-  // accessing out of range memory. Each time the pid of the Process it was
-  // stopping on was very large . Added checks for pid > TotalProcesses() to
-  // help resolve.
   std::sort(processes_.begin(), processes_.end(),
             [total = TotalProcesses()](Process& a, Process& b) {
-              if (a.Pid() > total || b.Pid() > total) {
-                return false;
-              } else {
-                return a.State() < b.State();
-              }
+              return a.State() < b.State();
             });
 
   // Verify if process has been killed, and pop it off
@@ -138,3 +128,5 @@ void System::SortProcesses() {
   }
   std::sort(processes_.begin(), processes_.end(), sort_function);
 }
+
+void System::InitCpus() {}

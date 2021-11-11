@@ -13,6 +13,10 @@
 using std::string;
 using std::to_string;
 
+void NCursesDisplay::ClearLine(WINDOW* window, int row) {
+  mvwprintw(window, row, 1, (string(window->_maxx - 1, ' ').c_str()));
+}
+
 /*
  * Sets color to entire string and applies bold and underline attributes to a
  * single character at given position. Defaults to first character if position
@@ -49,7 +53,8 @@ void NCursesDisplay::AddColorChar(WINDOW* window, int color, chtype c) {
 void NCursesDisplay::Resize(WINDOW* system_w, WINDOW* process_w, int& rows) {
   int new_x, new_y;
   getmaxyx(stdscr, new_y, new_x);
-  wresize(system_w, SYSTEM_WINDOW_HEIGHT, new_x);
+  int system_window_height = system_w->_maxy + 1;
+  wresize(system_w, system_window_height, new_x);
   wresize(process_w, new_y - system_w->_maxy - 1, new_x);
   rows = new_y - system_w->_maxy - 4;
   wclear(stdscr);
@@ -161,32 +166,54 @@ std::string NCursesDisplay::ProgressBar(float percent) {
 void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
   int row{0};
   int x_max = getmaxx(window);
+
+  // [ Quit ] upper right corner
   mvwprintw(window, row, x_max - 10, "[ ");
   BoldUnderlineAndColor(window, 2, row, x_max - 8, "Quit");
   mvwprintw(window, row, x_max - 4, " ]");
-  mvwprintw(window, ++row, 2, ("OS: " + system.OperatingSystem()).c_str());
-  mvwprintw(window, ++row, 2, ("Kernel: " + system.Kernel()).c_str());
+
+  // OS  Kernel  Up Time
+  std::string os = "OS: " + system.OperatingSystem();
+  mvwprintw(window, ++row, 2, os.c_str());
+  std::string kernel = "Kernel: " + system.Kernel();
+  mvwprintw(window, row, 8 + os.size(), kernel.c_str());
+  mvwprintw(window, row, 14 + os.size() + kernel.size(),
+            ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
+
+  // Aggregate CPU progress bar
   mvwprintw(window, ++row, 2, "CPU: ");
   wattron(window, COLOR_PAIR(1));
   mvwprintw(window, row, 10, "");
   wprintw(window, ProgressBar(system.Cpu().Utilization()).c_str());
   wattroff(window, COLOR_PAIR(1));
+
+  // Individual Core CPU progress bars
+  std::vector<Processor> cpus = system.Cpus();
+  for (auto& cpu : cpus) {
+    mvwprintw(window, ++row, 2, ("CPU" + to_string(cpu.Id()) + ":").c_str());
+    wattron(window, COLOR_PAIR(1));
+    mvwprintw(window, row, 10, "");
+    wprintw(window, ProgressBar(cpu.Utilization()).c_str());
+    wattroff(window, COLOR_PAIR(1));
+  }
+
+  // Memory progress bar
   mvwprintw(window, ++row, 2, "Memory: ");
   wattron(window, COLOR_PAIR(1));
   mvwprintw(window, row, 10, "");
   wprintw(window, ProgressBar(system.MemoryUtilization()).c_str());
   wattroff(window, COLOR_PAIR(1));
-  mvwprintw(window, ++row, 2,
-            ("Total Processes: " + to_string(system.TotalProcesses())).c_str());
-  mvwprintw(
-      window, ++row, 2,
-      ("Running Processes: " + to_string(system.RunningProcesses()) + "   ")
-          .c_str());
-  mvwprintw(window, row, 25,
-            ("Alive Processes: " + to_string(system.Processes().size()) + "   ")
-                .c_str());
-  mvwprintw(window, ++row, 2,
-            ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
+
+  // Total Processes     Running Processes     Alive Processes
+  ClearLine(window, ++row);
+  std::string total = "Total Process: " + to_string(system.TotalProcesses());
+  mvwprintw(window, row, 2, total.c_str());
+  std::string running =
+      "Running Processes: " + to_string(system.RunningProcesses());
+  mvwprintw(window, row, 6 + total.size(), running.c_str());
+  std::string alive =
+      "Alive Processes: " + to_string(system.Processes().size());
+  mvwprintw(window, row, 11 + total.size() + running.size(), alive.c_str());
 }
 
 void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {
@@ -200,6 +227,7 @@ void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {
   int const command_column{47};
   int max_x = getmaxx(window);
 
+  // [ Sort Order: -/+ ]  upper right corner
   mvwprintw(window, row, max_x - 21, "[ Sort Order: ");
   bool descending = system.Descending();
   int key_color = descending ? 4 : 3;
@@ -209,6 +237,7 @@ void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {
   AddColorChar(window, key_color, '+');
   mvwprintw(window, row, max_x - 4, " ]");
 
+  // Column headings
   int color = system.Sort() == System::kPid_ ? 4 : 3;
   BoldUnderlineAndColor(window, color, ++row, pid_column, "PID");
   color = system.Sort() == System::kUser_ ? 4 : 3;
@@ -224,11 +253,10 @@ void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {
   color = system.Sort() == System::kCommand_ ? 4 : 3;
   BoldUnderlineAndColor(window, color, row, command_column, "COMMAND", 1);
 
+  // Processes
   std::vector<Process> processes = system.Processes();
   for (int i = 0; i < n; ++i) {
-    //  Clear the line
-    mvwprintw(window, ++row, pid_column,
-              (string(window->_maxx - 2, ' ').c_str()));
+    ClearLine(window, ++row);
 
     if ((size_t)i > processes.size() - 1) {
       continue;
@@ -267,7 +295,8 @@ void NCursesDisplay::Display(System& system) {
 
   int x_max, y_max;
   getmaxyx(stdscr, y_max, x_max);
-  WINDOW* system_window = newwin(SYSTEM_WINDOW_HEIGHT, x_max, 0, 0);
+  int system_window_height = SYSTEM_WINDOW_ROWS + system.TotalCpus();
+  WINDOW* system_window = newwin(system_window_height, x_max, 0, 0);
   WINDOW* process_window = newwin(y_max - system_window->_maxy - 1, x_max,
                                   system_window->_maxy + 1, 0);
 
@@ -278,6 +307,7 @@ void NCursesDisplay::Display(System& system) {
     box(process_window, 0, 0);
     box(system_window, 0, 0);
     system.UpdateProcesses();
+    system.UpdateProcessors();
     DisplayProcesses(system, process_window, process_rows);
     DisplaySystem(system, system_window);
     wrefresh(process_window);

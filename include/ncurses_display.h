@@ -6,9 +6,10 @@
 #include "process.h"
 #include "system.h"
 
-#define SYSTEM_WINDOW_HEIGHT 9
+#define SYSTEM_WINDOW_ROWS 6
 
 namespace NCursesDisplay {
+void ClearLine(WINDOW* window, int row);
 void BoldUnderlineAndColor(WINDOW* window, int color, int row, int col,
                            std::string str, size_t pos = 0);
 void AddColorChar(WINDOW* window, int color, chtype c);

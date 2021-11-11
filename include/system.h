@@ -13,7 +13,9 @@ class System {
 
   System();
   std::vector<Process>& Processes();
+  int TotalCpus() const;
   Processor& Cpu();
+  std::vector<Processor>& Cpus();
   std::string Kernel() const;
   std::string OperatingSystem() const;
   unsigned long RunningProcesses() const;
@@ -24,19 +26,20 @@ class System {
   void SetSort(Sort_t s);
   bool Descending() const;
   void SetDescending(bool d);
+  void UpdateProcessors();
   void UpdateProcesses();
 
  private:
-  Processor cpu_ = {};
-  std::vector<Processor> cpus_ = {};
-  std::vector<Process> processes_ = {};
+  int total_cpus_;
+  Processor aggregate_cpu_;
+  std::vector<Processor> cpus_;
+  std::vector<Process> processes_;
   Sort_t sort_ = kCpu_;
   bool descending_ = true;
 
   void AddProcesses();
   void RemoveProcesses();
   void SortProcesses();
-  void InitCpus();
 };
 
 #endif

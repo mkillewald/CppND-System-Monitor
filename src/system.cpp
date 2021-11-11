@@ -14,10 +14,18 @@ using std::size_t;
 using std::string;
 using std::vector;
 
-System::System() { InitCpus(); }
+System::System() {
+  aggregate_cpu_ = Processor();
+  total_cpus_ = LinuxParser::GetTotalCpus();
+  for (int i = 0; i < total_cpus_; i++) {
+    cpus_.emplace_back(Processor(i));
+  }
+}
 
+int System::TotalCpus() const { return total_cpus_; }
+Processor& System::Cpu() { return aggregate_cpu_; }
+vector<Processor>& System::Cpus() { return cpus_; }
 vector<Process>& System::Processes() { return processes_; }
-Processor& System::Cpu() { return cpu_; }
 string System::Kernel() const { return LinuxParser::Kernel(); }
 string System::OperatingSystem() const {
   return LinuxParser::OperatingSystem();
@@ -36,6 +44,13 @@ System::Sort_t System::Sort() const { return sort_; }
 void System::SetSort(Sort_t s) { sort_ = s; }
 bool System::Descending() const { return descending_; }
 void System::SetDescending(bool d) { descending_ = d; }
+
+void System::UpdateProcessors() {
+  Cpu().Update();
+  for (auto& cpu : cpus_) {
+    cpu.Update();
+  }
+}
 
 void System::UpdateProcesses() {
   AddProcesses();
@@ -57,8 +72,8 @@ void System::AddProcesses() {
       if (command.empty()) {
         // On my Ubuntu 21.10 VM at home, I was getting many processes with
         // blank command lines, so this is my solution for not displaying a
-        // bunch of blank lines. It turns out this does not seem to be an issue
-        // on the Udacity Ubuntu 16.04.6 VM workspace.
+        // bunch of blank lines. It turns out this does not seem to be an
+        // issue on the Udacity Ubuntu 16.04.6 VM workspace.
         command = LinuxParser::Filename(pid);
       }
       processes_.emplace_back(Process(pid, user, command));
@@ -128,5 +143,3 @@ void System::SortProcesses() {
   }
   std::sort(processes_.begin(), processes_.end(), sort_function);
 }
-
-void System::InitCpus() {}

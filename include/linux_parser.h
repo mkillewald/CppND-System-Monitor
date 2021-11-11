@@ -85,7 +85,7 @@ enum PidStat {
 // Helpers
 std::string GetLineFromFile(const std::string& path, const std::string& key);
 std::vector<std::string> GetValuesFromLine(const std::string& line);
-std::string GetValueFromLine(const std::string& line, const int index);
+std::string GetValueFromLine(const std::string& line, const int index = 0);
 void FixTokenInParens(std::string& line);
 
 // System
@@ -94,12 +94,13 @@ std::string OperatingSystem();
 std::vector<unsigned int> Pids();
 float MemoryUtilization();
 unsigned long UpTime();
-unsigned long Jiffies();
-unsigned long ActiveJiffies();
-unsigned long IdleJiffies();
+unsigned long Jiffies(int index = -1);
+unsigned long ActiveJiffies(int index = -1);
+unsigned long IdleJiffies(int index = -1);
 unsigned long TotalProcesses();
 unsigned long RunningProcesses();
-std::vector<std::string> CpuUtilization();
+std::vector<std::string> CpuUtilization(int index = -1);
+int GetTotalCpus();
 
 // Processes
 std::string Command(unsigned int pid);

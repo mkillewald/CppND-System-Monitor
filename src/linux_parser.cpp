@@ -4,7 +4,6 @@
 
 #include <experimental/filesystem>
 #include <fstream>
-#include <iostream>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -60,7 +59,7 @@ vector<string> LinuxParser::GetValuesFromLine(const string& line) {
  * line is empty, or an out of range index was supplied, then will return an
  * empty string.
  */
-string LinuxParser::GetValueFromLine(const string& line, const int index = 0) {
+string LinuxParser::GetValueFromLine(const string& line, const int index) {
   string value;
   std::istringstream linestream(line);
   int count = 0;
@@ -163,9 +162,9 @@ unsigned long LinuxParser::UpTime() {
   return stoul(uptime);
 }
 
-unsigned long LinuxParser::Jiffies() {
+unsigned long LinuxParser::Jiffies(int index) {
   unsigned long total = 0;
-  vector<string> values = CpuUtilization();
+  vector<string> values = CpuUtilization(index);
   if (values.size() > CPUStates::kSteal_) {
     for (int i = CPUStates::kUser_; i <= CPUStates::kSteal_; i++) {
       total += stoul(values.at(i));
@@ -174,9 +173,9 @@ unsigned long LinuxParser::Jiffies() {
   return total;
 }
 
-unsigned long LinuxParser::ActiveJiffies() {
+unsigned long LinuxParser::ActiveJiffies(int index) {
   unsigned long active = 0;
-  vector<string> values = CpuUtilization();
+  vector<string> values = CpuUtilization(index);
   if (values.size() > CPUStates::kSteal_) {
     active = stoul(values.at(CPUStates::kUser_));
     active += stoul(values.at(CPUStates::kNice_));
@@ -188,9 +187,9 @@ unsigned long LinuxParser::ActiveJiffies() {
   return active;
 }
 
-unsigned long LinuxParser::IdleJiffies() {
+unsigned long LinuxParser::IdleJiffies(int index) {
   unsigned long idle = 0;
-  vector<string> values = CpuUtilization();
+  vector<string> values = CpuUtilization(index);
   if (values.size() > CPUStates::kIOwait_) {
     idle = stoul(values.at(CPUStates::kIdle_));
     idle += stoul(values.at(CPUStates::kIOwait_));
@@ -216,8 +215,12 @@ unsigned long LinuxParser::RunningProcesses() {
   return stoul(value);
 }
 
-vector<string> LinuxParser::CpuUtilization() {
-  string line = GetLineFromFile(kProcDirectory + kStatFilename, kCpu);
+vector<string> LinuxParser::CpuUtilization(int index) {
+  string cpu_key{kCpu};
+  if (index > -1) {
+    cpu_key += to_string(index);
+  }
+  string line = GetLineFromFile(kProcDirectory + kStatFilename, cpu_key);
   return GetValuesFromLine(line);
 }
 
@@ -234,6 +237,20 @@ string LinuxParser::Filename(unsigned int pid) {
     return line.substr(l_paren, r_paren - l_paren + 1);
   }
   return string();
+}
+
+int LinuxParser::GetTotalCpus() {
+  int total{-1};
+  std::ifstream filestream(kProcDirectory + kStatFilename);
+  if (filestream.is_open()) {
+    string line;
+    while (std::getline(filestream, line)) {
+      if (GetValueFromLine(line).substr(0, 3).compare(kCpu) == 0) {
+        total++;
+      }
+    }
+  }
+  return total;
 }
 
 string LinuxParser::Ram(unsigned int pid) {

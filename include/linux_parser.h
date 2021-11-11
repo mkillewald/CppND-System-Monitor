@@ -86,7 +86,7 @@ enum PidStat {
 std::string GetLineFromFile(const std::string& path, const std::string& key);
 std::vector<std::string> GetValuesFromLine(const std::string& line);
 std::string GetValueFromLine(const std::string& line, const int index);
-void FixFilenameInParens(std::string& line);
+void FixTokenInParens(std::string& line);
 
 // System
 std::string Kernel();

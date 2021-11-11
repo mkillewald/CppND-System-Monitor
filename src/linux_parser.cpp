@@ -79,7 +79,7 @@ string LinuxParser::GetValueFromLine(const string& line, const int index = 0) {
  * within the parenthesis. This will replace those spaces with an underscore to
  * allow for correct tokenization of the line
  */
-void LinuxParser::FixFilenameInParens(string& line) {
+void LinuxParser::FixTokenInParens(string& line) {
   size_t l_paren = line.find('(');
   if (l_paren == string::npos) {
     return;
@@ -279,7 +279,7 @@ string LinuxParser::User(unsigned int pid) {
 unsigned long LinuxParser::UpTime(unsigned int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
-  FixFilenameInParens(line);
+  FixTokenInParens(line);
   string start_time_str = GetValueFromLine(line, PidStat::kStartTime_);
   if (start_time_str.empty()) {
     return 0;
@@ -292,7 +292,7 @@ unsigned long LinuxParser::ActiveJiffies(unsigned int pid) {
   unsigned long active = 0;
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
-  FixFilenameInParens(line);
+  FixTokenInParens(line);
   vector<string> values = GetValuesFromLine(line);
 
   if (values.size() > PidStat::kStime_) {
@@ -306,6 +306,6 @@ unsigned long LinuxParser::ActiveJiffies(unsigned int pid) {
 string LinuxParser::State(unsigned int pid) {
   string line =
       GetLineFromFile(kProcDirectory + to_string(pid) + kStatFilename);
-  FixFilenameInParens(line);
+  FixTokenInParens(line);
   return GetValueFromLine(line, PidStat::kState_);
 }

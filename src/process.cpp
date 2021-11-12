@@ -24,8 +24,8 @@ Process::Process(unsigned int pid, string user, string command)
 
 unsigned int Process::Pid() const { return pid_; }
 string Process::User() const { return user_; }
-string Process::Command(int len) const {
-  if (len > 0 && (int)command_.size() > len) {
+string Process::Command(unsigned int len) const {
+  if (len > 0 && command_.size() > len) {
     return command_.substr(0, len - 5) + "(...)";
   }
   return command_;

@@ -24,7 +24,12 @@ Process::Process(unsigned int pid, string user, string command)
 
 unsigned int Process::Pid() const { return pid_; }
 string Process::User() const { return user_; }
-string Process::Command() const { return command_; }
+string Process::Command(int len) const {
+  if (len > 0 && (int)command_.size() > len) {
+    return command_.substr(0, len - 5) + "(...)";
+  }
+  return command_;
+}
 unsigned long Process::Active() const { return active_; }
 unsigned long Process::UpTime() const { return uptime_; }
 float Process::CpuUtilization() const { return cpu_util_; }

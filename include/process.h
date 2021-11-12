@@ -11,7 +11,7 @@ class Process {
   Process(unsigned int pid, std::string user, std::string command);
   unsigned int Pid() const;
   std::string User() const;
-  std::string Command() const;
+  std::string Command(int len = -1) const;
   unsigned long Active() const;
   unsigned long UpTime() const;
   float CpuUtilization() const;

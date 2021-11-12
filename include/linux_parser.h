@@ -21,7 +21,7 @@ const std::string kPasswordPath{"/etc/passwd"};
 const std::string kCpu{"cpu"};
 const std::string kProcesses{"processes"};
 const std::string kProcsRunning{"procs_running"};
-const std::string kVmSize{"VmSize:"};
+const std::string kVmRSS{"VmRSS:"};
 const std::string kUid{"Uid:"};
 
 // /etc/passwd

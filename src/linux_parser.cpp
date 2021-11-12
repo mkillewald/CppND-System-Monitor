@@ -254,8 +254,12 @@ int LinuxParser::GetTotalCpus() {
 }
 
 string LinuxParser::Ram(unsigned int pid) {
+  // Using VmRSS here instead of VmSize because VmSize includes virtual memory
+  // used by the process, and VmRSS gives exact physical memory being used.
+  //
+  // see https://man7.org/linux/man-pages/man5/proc.5.html for more info.
   string line = GetLineFromFile(
-      kProcDirectory + to_string(pid) + kStatusFilename, kVmSize);
+      kProcDirectory + to_string(pid) + kStatusFilename, kVmRSS);
   if (line.empty()) {
     return "0.00000";
   }

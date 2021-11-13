@@ -25,10 +25,10 @@ Process::Process(unsigned int pid, string user, string command)
 unsigned int Process::Pid() const { return pid_; }
 string Process::User() const { return user_; }
 string Process::Command(unsigned int len) const {
-  if (len > 0 && len <= 5) {
+  if (len > 0 && len <= 6) {
     return command_.substr(0, len);
   } else if (len > 0 && command_.size() > len) {
-    return command_.substr(0, len - 5) + "(...)";
+    return command_.substr(0, len - 6) + " (...)";
   }
   return command_;
 }

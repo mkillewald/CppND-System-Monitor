@@ -40,6 +40,8 @@ unsigned long System::UpTime() const { return LinuxParser::UpTime(); }
 float System::MemoryUtilization() const {
   return LinuxParser::MemoryUtilization();
 }
+bool System::ShowCores() const { return show_cores_; };
+void System::ToggleCores() { show_cores_ = !show_cores_; }
 System::Sort_t System::Sort() const { return sort_; }
 void System::SetSort(Sort_t s) { sort_ = s; }
 bool System::Descending() const { return descending_; }

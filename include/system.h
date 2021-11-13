@@ -22,6 +22,8 @@ class System {
   unsigned long TotalProcesses() const;
   unsigned long UpTime() const;
   float MemoryUtilization() const;
+  bool ShowCores() const;
+  void ToggleCores();
   Sort_t Sort() const;
   void SetSort(Sort_t s);
   bool Descending() const;
@@ -36,6 +38,7 @@ class System {
   std::vector<Process> processes_;
   std::string kernel_;
   std::string os_;
+  bool show_cores_ = true;
   Sort_t sort_ = kCpu_;
   bool descending_ = true;
 

@@ -33,7 +33,12 @@ void NCursesDisplay::CheckEvents(System& system, WINDOW* system_w,
   if (Keypress()) {
     switch (getch()) {
       case KEY_RESIZE:
-        Resize(system_w, process_w, process_rows);
+        Resize(system, system_w, process_w, process_rows);
+        break;
+      case 'h':
+      case 'H':
+        system.ToggleCores();
+        Resize(system, system_w, process_w, process_rows);
         break;
       case 'q':
       case 'Q':
@@ -134,16 +139,31 @@ void NCursesDisplay::AddColorChar(WINDOW* window, int color, chtype c) {
   wattroff(window, COLOR_PAIR(color));
 }
 
-void NCursesDisplay::Resize(WINDOW* system_w, WINDOW* process_w, int& rows) {
+void NCursesDisplay::Resize(System& system, WINDOW* system_w, WINDOW* process_w,
+                            int& rows) {
   int new_x, new_y;
   getmaxyx(stdscr, new_y, new_x);
-  int system_window_height = system_w->_maxy + 1;
+  int system_window_height;
+  if (system.ShowCores()) {
+    system_window_height = SYSTEM_WINDOW_ROWS + system.TotalCpus();
+  } else {
+    system_window_height = SYSTEM_WINDOW_ROWS;
+  }
   wresize(system_w, system_window_height, new_x);
-  wresize(process_w, new_y - system_w->_maxy - 1, new_x);
+  if (system.ShowCores()) {
+    wresize(process_w, new_y - system_window_height, new_x);
+    mvwin(process_w, system_window_height, 0);
+  } else {
+    mvwin(process_w, system_window_height, 0);
+    wresize(process_w, new_y - system_window_height, new_x);
+  }
   rows = new_y - system_w->_maxy - 4;
   wclear(stdscr);
   wclear(system_w);
   wclear(process_w);
+  wrefresh(process_w);
+  wrefresh(system_w);
+  refresh();
 }
 
 // 50 bars uniformly displayed from 0 - 100 %
@@ -163,57 +183,92 @@ std::string NCursesDisplay::ProgressBar(float percent) {
   return result + " " + display + "/100%";
 }
 
+void NCursesDisplay::SystemMenu(System& sys, WINDOW* win, int row, int col) {
+  mvwprintw(win, row, col, "[ ");
+  col += 2;
+  if (sys.ShowCores()) {
+    BoldUnderlineAndColor(win, 3, row, col, kHideCores);
+    col += kHideCores.size();
+  } else {
+    BoldUnderlineAndColor(win, 3, row, col, kShowCores, 1);
+    col += kShowCores.size();
+  }
+  mvwprintw(win, row, col, " ]");
+  col += 4;
+  mvwprintw(win, row, col, "[ ");
+  col += 2;
+  BoldUnderlineAndColor(win, 2, row, col, kQuit.c_str());
+  col += kQuit.size();
+  mvwprintw(win, row, col, " ]");
+}
+
+void NCursesDisplay::SystemInfo(System& sys, WINDOW* win, int row, int col) {
+  std::string os = kOs + sys.OperatingSystem();
+  mvwprintw(win, row, col, os.c_str());
+  std::string kernel = kKernel + sys.Kernel();
+  mvwprintw(win, row, col + 2 + os.size(), kernel.c_str());
+  mvwprintw(win, row, col + 4 + os.size() + kernel.size(),
+            (kUpTime + Format::ElapsedTime(sys.UpTime())).c_str());
+}
+
+void NCursesDisplay::CpuBars(System& sys, WINDOW* win, int& row, int col) {
+  mvwprintw(win, row, col, (kCpuCore + ":").c_str());
+  wattron(win, COLOR_PAIR(1));
+  mvwprintw(win, row, col + 8, "");
+  wprintw(win, ProgressBar(sys.Cpu().Utilization()).c_str());
+  wattroff(win, COLOR_PAIR(1));
+
+  if (sys.ShowCores()) {
+    std::vector<Processor> cpus = sys.Cpus();
+    for (auto& cpu : cpus) {
+      mvwprintw(win, ++row, col,
+                (kCpuCore + to_string(cpu.Id()) + ":").c_str());
+      wattron(win, COLOR_PAIR(1));
+      mvwprintw(win, row, col + 8, "");
+      wprintw(win, ProgressBar(cpu.Utilization()).c_str());
+      wattroff(win, COLOR_PAIR(1));
+    }
+  }
+}
+
+void NCursesDisplay::MemoryBar(System& sys, WINDOW* win, int row, int col) {
+  mvwprintw(win, row, col, kMemory.c_str());
+  wattron(win, COLOR_PAIR(1));
+  mvwprintw(win, row, col + 8, "");  // Tab
+  wprintw(win, ProgressBar(sys.MemoryUtilization()).c_str());
+  wattroff(win, COLOR_PAIR(1));
+}
+
+void NCursesDisplay::ProcessMenu(System& sys, WINDOW* win, int row, int col) {
+  string sort_order = "[ " + kSortOrder;
+  mvwprintw(win, row, col, sort_order.c_str());
+  bool descending = sys.Descending();
+  int key_color = descending ? 4 : 3;
+  AddColorChar(win, key_color, '-');
+  AddColorChar(win, 3, '/');
+  key_color = descending ? 3 : 4;
+  AddColorChar(win, key_color, '+');
+  mvwprintw(win, row, col + sort_order.size() + 3, " ]");
+}
+
+void NCursesDisplay::ProcessInfo(System& sys, WINDOW* win, int row, int col) {
+  ClearLine(win, row);
+  std::string total = kTotal + to_string(sys.TotalProcesses());
+  mvwprintw(win, row, col, total.c_str());
+  std::string running = kRunning + to_string(sys.RunningProcesses());
+  mvwprintw(win, row, col + 2 + total.size(), running.c_str());
+  std::string alive = kAlive + to_string(sys.Processes().size());
+  mvwprintw(win, row, col + 4 + total.size() + running.size(), alive.c_str());
+}
+
 void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
   int row{0};
   int x_max = getmaxx(window);
-
-  // [ Quit ] upper right corner
-  mvwprintw(window, row, x_max - 10, "[ ");
-  BoldUnderlineAndColor(window, 2, row, x_max - 8, "Quit");
-  mvwprintw(window, row, x_max - 4, " ]");
-
-  // OS  Kernel  Up Time
-  std::string os = "OS: " + system.OperatingSystem();
-  mvwprintw(window, ++row, 2, os.c_str());
-  std::string kernel = "Kernel: " + system.Kernel();
-  mvwprintw(window, row, 4 + os.size(), kernel.c_str());
-  mvwprintw(window, row, 6 + os.size() + kernel.size(),
-            ("Up Time: " + Format::ElapsedTime(system.UpTime())).c_str());
-
-  // Aggregate CPU progress bar
-  mvwprintw(window, ++row, 2, "CPU: ");
-  wattron(window, COLOR_PAIR(1));
-  mvwprintw(window, row, 10, "");
-  wprintw(window, ProgressBar(system.Cpu().Utilization()).c_str());
-  wattroff(window, COLOR_PAIR(1));
-
-  // Individual Core CPU progress bars
-  std::vector<Processor> cpus = system.Cpus();
-  for (auto& cpu : cpus) {
-    mvwprintw(window, ++row, 2, ("CPU" + to_string(cpu.Id()) + ":").c_str());
-    wattron(window, COLOR_PAIR(1));
-    mvwprintw(window, row, 10, "");
-    wprintw(window, ProgressBar(cpu.Utilization()).c_str());
-    wattroff(window, COLOR_PAIR(1));
-  }
-
-  // Memory progress bar
-  mvwprintw(window, ++row, 2, "Memory: ");
-  wattron(window, COLOR_PAIR(1));
-  mvwprintw(window, row, 10, "");
-  wprintw(window, ProgressBar(system.MemoryUtilization()).c_str());
-  wattroff(window, COLOR_PAIR(1));
-
-  // Total Processes     Running Processes     Alive Processes
-  ClearLine(window, ++row);
-  std::string total = "Total Process: " + to_string(system.TotalProcesses());
-  mvwprintw(window, row, 2, total.c_str());
-  std::string running =
-      "Running Processes: " + to_string(system.RunningProcesses());
-  mvwprintw(window, row, 4 + total.size(), running.c_str());
-  std::string alive =
-      "Alive Processes: " + to_string(system.Processes().size());
-  mvwprintw(window, row, 6 + total.size() + running.size(), alive.c_str());
+  SystemMenu(system, window, row, x_max - 26);
+  SystemInfo(system, window, ++row, 2);
+  CpuBars(system, window, ++row, 2);
+  MemoryBar(system, window, ++row, 2);
+  ProcessInfo(system, window, ++row, 2);
 }
 
 void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {
@@ -227,31 +282,23 @@ void NCursesDisplay::DisplayProcesses(System& system, WINDOW* window, int n) {
   int const command_column{47};
   int max_x = getmaxx(window);
 
-  // [ Sort Order: -/+ ]  upper right corner
-  mvwprintw(window, row, max_x - 21, "[ Sort Order: ");
-  bool descending = system.Descending();
-  int key_color = descending ? 4 : 3;
-  AddColorChar(window, key_color, '-');
-  AddColorChar(window, 3, '/');
-  key_color = descending ? 3 : 4;
-  AddColorChar(window, key_color, '+');
-  mvwprintw(window, row, max_x - 4, " ]");
+  ProcessMenu(system, window, row, max_x - 21);
 
   // Column headings
   int color = system.Sort() == System::kPid_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, ++row, pid_column, "PID");
+  BoldUnderlineAndColor(window, color, ++row, pid_column, kPid);
   color = system.Sort() == System::kUser_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, row, user_column, "USER");
+  BoldUnderlineAndColor(window, color, row, user_column, kUser);
   color = system.Sort() == System::kState_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, row, state_column, "S");
+  BoldUnderlineAndColor(window, color, row, state_column, kState);
   color = system.Sort() == System::kCpu_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, row, cpu_column, "CPU%%");
+  BoldUnderlineAndColor(window, color, row, cpu_column, kCpu);
   color = system.Sort() == System::kRam_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, row, ram_column, "RAM[MB]");
+  BoldUnderlineAndColor(window, color, row, ram_column, kRam);
   color = system.Sort() == System::kUpTime_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, row, time_column, "TIME+");
+  BoldUnderlineAndColor(window, color, row, time_column, kTime);
   color = system.Sort() == System::kCommand_ ? 4 : 3;
-  BoldUnderlineAndColor(window, color, row, command_column, "COMMAND", 1);
+  BoldUnderlineAndColor(window, color, row, command_column, kCommand, 1);
 
   // Processes
   std::vector<Process> processes = system.Processes();

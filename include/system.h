@@ -34,6 +34,8 @@ class System {
   Processor aggregate_cpu_;
   std::vector<Processor> cpus_;
   std::vector<Process> processes_;
+  std::string kernel_;
+  std::string os_;
   Sort_t sort_ = kCpu_;
   bool descending_ = true;
 

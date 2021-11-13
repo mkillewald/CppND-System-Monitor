@@ -20,16 +20,16 @@ System::System() {
   for (int i = 0; i < total_cpus_; i++) {
     cpus_.emplace_back(Processor(i));
   }
+  kernel_ = LinuxParser::Kernel();
+  os_ = LinuxParser::OperatingSystem();
 }
 
 int System::TotalCpus() const { return total_cpus_; }
 Processor& System::Cpu() { return aggregate_cpu_; }
 vector<Processor>& System::Cpus() { return cpus_; }
 vector<Process>& System::Processes() { return processes_; }
-string System::Kernel() const { return LinuxParser::Kernel(); }
-string System::OperatingSystem() const {
-  return LinuxParser::OperatingSystem();
-}
+string System::Kernel() const { return kernel_; }
+string System::OperatingSystem() const { return os_; }
 unsigned long System::RunningProcesses() const {
   return LinuxParser::RunningProcesses();
 }

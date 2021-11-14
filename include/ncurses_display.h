@@ -7,7 +7,7 @@
 #include "system.h"
 
 #define SYSTEM_SHOW_CORE_STATIC_ROWS 6
-#define SYSTEM_HIDE_CORE_STATIC_ROWS 7
+#define SYSTEM_HIDE_CORE_STATIC_ROWS 8
 
 namespace NCursesDisplay {
 // system info

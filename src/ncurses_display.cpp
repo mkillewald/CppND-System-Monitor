@@ -263,15 +263,15 @@ void NCursesDisplay::ProcessInfo(System& sys, WINDOW* win, int& row, int col) {
   std::string alive = kAlive + to_string(sys.Processes().size());
   if (sys.ShowCores()) {
     ClearLine(win, row);
-    mvwprintw(win, row, col, total.c_str());
-    mvwprintw(win, row, (win->_maxx - running.size()) / 2, running.c_str());
-    mvwprintw(win, row, win->_maxx - alive.size() - 1, alive.c_str());
+    mvwprintw(win, row, col, running.c_str());
+    mvwprintw(win, row, (win->_maxx - alive.size()) / 2, alive.c_str());
+    mvwprintw(win, row, win->_maxx - total.size() - 1, total.c_str());
   } else {
     ClearLine(win, row);
-    mvwprintw(win, row, col, total.c_str());
-    mvwprintw(win, row, col + 2 + total.size(), running.c_str());
+    mvwprintw(win, row, col, running.c_str());
+    mvwprintw(win, row, col + 2 + running.size(), alive.c_str());
     ClearLine(win, ++row);
-    mvwprintw(win, row, col, alive.c_str());
+    mvwprintw(win, row, col, total.c_str());
   }
 }
 

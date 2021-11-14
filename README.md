@@ -2,7 +2,7 @@
 This is my submission for project 2 of [Udacity's C++ Nanodegree Program](https://www.udacity.com/course/c-plus-plus-nanodegree--nd213).    
 
 The starter code for this project is located at:    
-https://github.com/udacity/CppND-Sysetem-Monitor
+https://github.com/udacity/CppND-System-Monitor
 
 ![System Monitor](images/monitor-800.png)
 

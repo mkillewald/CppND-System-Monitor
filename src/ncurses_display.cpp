@@ -145,9 +145,9 @@ void NCursesDisplay::Resize(System& system, WINDOW* system_w, WINDOW* process_w,
   getmaxyx(stdscr, new_y, new_x);
   int system_window_height;
   if (system.ShowCores()) {
-    system_window_height = SYSTEM_WINDOW_ROWS + system.TotalCpus();
+    system_window_height = SYSTEM_SHOW_CORE_STATIC_ROWS + system.TotalCpus();
   } else {
-    system_window_height = SYSTEM_WINDOW_ROWS;
+    system_window_height = SYSTEM_HIDE_CORE_STATIC_ROWS;
   }
   wresize(system_w, system_window_height, new_x);
   if (system.ShowCores()) {
@@ -183,7 +183,7 @@ std::string NCursesDisplay::ProgressBar(float percent) {
   return result + " " + display + "/100%";
 }
 
-void NCursesDisplay::SystemMenu(System& sys, WINDOW* win, int row, int col) {
+void NCursesDisplay::SystemMenu(System& sys, WINDOW* win, int& row, int col) {
   mvwprintw(win, row, col, "[ ");
   col += 2;
   if (sys.ShowCores()) {
@@ -202,13 +202,19 @@ void NCursesDisplay::SystemMenu(System& sys, WINDOW* win, int row, int col) {
   mvwprintw(win, row, col, " ]");
 }
 
-void NCursesDisplay::SystemInfo(System& sys, WINDOW* win, int row, int col) {
+void NCursesDisplay::SystemInfo(System& sys, WINDOW* win, int& row, int col) {
   std::string os = kOs + sys.OperatingSystem();
-  mvwprintw(win, row, col, os.c_str());
   std::string kernel = kKernel + sys.Kernel();
-  mvwprintw(win, row, col + 2 + os.size(), kernel.c_str());
-  mvwprintw(win, row, col + 4 + os.size() + kernel.size(),
-            (kUpTime + Format::ElapsedTime(sys.UpTime())).c_str());
+  std::string uptime = kUpTime + Format::ElapsedTime(sys.UpTime());
+  if (sys.ShowCores()) {
+    mvwprintw(win, row, col, os.c_str());
+    mvwprintw(win, row, (win->_maxx - kernel.size()) / 2, kernel.c_str());
+    mvwprintw(win, row, win->_maxx - uptime.size() - 1, uptime.c_str());
+  } else {
+    mvwprintw(win, row, col, os.c_str());
+    mvwprintw(win, row, win->_maxx - uptime.size() - 1, uptime.c_str());
+    mvwprintw(win, ++row, col, kernel.c_str());
+  }
 }
 
 void NCursesDisplay::CpuBars(System& sys, WINDOW* win, int& row, int col) {
@@ -231,7 +237,7 @@ void NCursesDisplay::CpuBars(System& sys, WINDOW* win, int& row, int col) {
   }
 }
 
-void NCursesDisplay::MemoryBar(System& sys, WINDOW* win, int row, int col) {
+void NCursesDisplay::MemoryBar(System& sys, WINDOW* win, int& row, int col) {
   mvwprintw(win, row, col, kMemory.c_str());
   wattron(win, COLOR_PAIR(1));
   mvwprintw(win, row, col + 8, "");  // Tab
@@ -239,7 +245,7 @@ void NCursesDisplay::MemoryBar(System& sys, WINDOW* win, int row, int col) {
   wattroff(win, COLOR_PAIR(1));
 }
 
-void NCursesDisplay::ProcessMenu(System& sys, WINDOW* win, int row, int col) {
+void NCursesDisplay::ProcessMenu(System& sys, WINDOW* win, int& row, int col) {
   string sort_order = "[ " + kSortOrder;
   mvwprintw(win, row, col, sort_order.c_str());
   bool descending = sys.Descending();
@@ -251,14 +257,14 @@ void NCursesDisplay::ProcessMenu(System& sys, WINDOW* win, int row, int col) {
   mvwprintw(win, row, col + sort_order.size() + 3, " ]");
 }
 
-void NCursesDisplay::ProcessInfo(System& sys, WINDOW* win, int row, int col) {
-  ClearLine(win, row);
+void NCursesDisplay::ProcessInfo(System& sys, WINDOW* win, int& row, int col) {
   std::string total = kTotal + to_string(sys.TotalProcesses());
-  mvwprintw(win, row, col, total.c_str());
   std::string running = kRunning + to_string(sys.RunningProcesses());
-  mvwprintw(win, row, col + 2 + total.size(), running.c_str());
   std::string alive = kAlive + to_string(sys.Processes().size());
-  mvwprintw(win, row, col + 4 + total.size() + running.size(), alive.c_str());
+  ClearLine(win, row);
+  mvwprintw(win, row, col, total.c_str());
+  mvwprintw(win, row, (win->_maxx - running.size()) / 2, running.c_str());
+  mvwprintw(win, row, win->_maxx - alive.size() - 1, alive.c_str());
 }
 
 void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
@@ -339,7 +345,7 @@ void NCursesDisplay::Display(System& system) {
 
   int x_max, y_max;
   getmaxyx(stdscr, y_max, x_max);
-  int system_window_height = SYSTEM_WINDOW_ROWS + system.TotalCpus();
+  int system_window_height = SYSTEM_SHOW_CORE_STATIC_ROWS + system.TotalCpus();
   WINDOW* system_window = newwin(system_window_height, x_max, 0, 0);
   WINDOW* process_window = newwin(y_max - system_window->_maxy - 1, x_max,
                                   system_window->_maxy + 1, 0);

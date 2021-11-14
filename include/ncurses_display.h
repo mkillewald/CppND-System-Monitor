@@ -6,7 +6,8 @@
 #include "process.h"
 #include "system.h"
 
-#define SYSTEM_WINDOW_ROWS 6
+#define SYSTEM_SHOW_CORE_STATIC_ROWS 6
+#define SYSTEM_HIDE_CORE_STATIC_ROWS 7
 
 namespace NCursesDisplay {
 // system info
@@ -42,12 +43,12 @@ void BoldUnderlineAndColor(WINDOW* window, int color, int row, int col,
 void AddColorChar(WINDOW* window, int color, chtype c);
 void Resize(System& system, WINDOW* system_w, WINDOW* process_w, int& n);
 std::string ProgressBar(float percent);
-void SystemMenu(System& system, WINDOW* window, int row, int col);
-void SystemInfo(System& system, WINDOW* window, int row, int col);
+void SystemMenu(System& system, WINDOW* window, int& row, int col);
+void SystemInfo(System& system, WINDOW* window, int& row, int col);
 void CpuBars(System& sys, WINDOW* win, int& row, int col);
-void MemoryBar(System& system, WINDOW* window, int row, int col);
-void ProcessMenu(System& system, WINDOW* window, int row, int col);
-void ProcessInfo(System& system, WINDOW* window, int row, int col);
+void MemoryBar(System& system, WINDOW* window, int& row, int col);
+void ProcessMenu(System& system, WINDOW* window, int& row, int col);
+void ProcessInfo(System& system, WINDOW* window, int& row, int col);
 void DisplaySystem(System& system, WINDOW* window);
 void DisplayProcesses(System& system, WINDOW* window, int n);
 void Display(System& system);
